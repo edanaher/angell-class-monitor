@@ -26,10 +26,11 @@ in
       RestartSec = "4h";
       StartLimitInterval = "1min";
       PermissionsStartOnly = "true"; # Run postgres setup as root
+      User = "angell";
     };
 
     preStart = ''
-      ${angell-class-monitor}/bin/setup.sh
+      ${angell-class-monitor}/bin/setup.sh ${web-path}
     '';
   };
 
