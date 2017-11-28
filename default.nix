@@ -1,11 +1,11 @@
 { pkgs ? import <nixpkgs> {} }:
 
-pkgs.python35Packages.buildPythonApplication {
+pkgs.python3Packages.buildPythonApplication {
   name = "angell-class-monitor";
 
   src = ./.;
 
-  propagatedBuildInputs = [ pkgs.python35Packages.docopt ];
+  propagatedBuildInputs = with pkgs.python3Packages; [ docopt psycopg2 ];
 
   buildPhase = "";
 

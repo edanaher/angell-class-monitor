@@ -8,6 +8,7 @@ from string import Template
 import urllib
 import urllib.request
 
+import psycopg2
 from docopt import docopt
 
 usage = """Angell page generator
@@ -165,3 +166,11 @@ now = list(os.popen('TZ=America/New_York date'))[0].rstrip()
 output = template.substitute(now=now, classes = "\n".join(classData))
 with open(OUTFILE, "w") as outfile:
   outfile.write(output)
+
+conn = psycopg2.connect(dbname = "angell", user = "angell");
+cur = conn.cursor()
+cur.execute('SELECT version()')
+db_version = cur.fetchone()
+print("database version: ", db_version)
+cur.close()
+conn.close()
