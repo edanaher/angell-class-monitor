@@ -174,12 +174,18 @@ db_version = cur.fetchone()
 print("database version: ", db_version)
 
 for c in classes:
-  cur.execute("""INSERT INTO classes(name) VALUES(%s) ON CONFLICT(name) DO UPDATE SET name=EXCLUDED.name RETURNING class_id""", (c,))
+  cur.execute("""INSERT INTO classes(name, created, updated) VALUES(%s, 'now', 'now') ON CONFLICT(name) DO UPDATE SET updated='now' RETURNING class_id""", (c,))
   class_id = cur.fetchone()[0]
   print("inserting ", c, " to ", class_id)
   for s in classes[c][1]:
-      cur.execute("""INSERT INTO sessions(class_id, week_day, start_day, end_time) VALUES (%s, %s, %s, %s)""", (class_id, s[1], s[6], s[5]))
+    cur.execute("""INSERT INTO sessions(class_id, week_day, end_time, created, updated) VALUES (%s, %s, %s, 'now', 'now') ON CONFLICT (class_id, week_day, end_time) DO UPDATE SET updated='now' RETURNING session_id""", (class_id, s[1], s[5]))
+    session_id = cur.fetchone()[0]
+    cur.execute("""SELECT period_id FROM periods WHERE session_id=%s AND start_day=%s""", (session_id, s[6]))
+    print("result is", cur.rowcount)
+    cur.execute("""INSERT INTO periods(session_id, start_day, created, updated) VALUES (%s, %s, 'now', 'now') ON CONFLICT (session_id, start_day) DO UPDATE SET updated='now'""", (session_id, s[6]))
+
 cur.close()
 
 conn.commit()
+
 conn.close()
