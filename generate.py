@@ -159,7 +159,7 @@ for c in sorted(classes):
     classData.append('<tr ' + classed + '>' + "\n".join([ '<td>' + c + '</td>' for c in columns ]) + '</tr>')
   classData.append('</table>')
 
-with open("template.html") as f:
+with open(os.path.dirname(os.path.abspath(__file__)) + "/template.html") as f:
   templateContents = f.read()
 template = Template(templateContents)
 now = list(os.popen('TZ=America/New_York date'))[0].rstrip()

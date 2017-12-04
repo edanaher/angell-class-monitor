@@ -16,6 +16,7 @@ in
   environment.systemPackages = [ angell-class-monitor pkgs.postgresql ];
 
   systemd.services.update-angell = {
+    enable = false;
     description = "update-angell script";
     after = [ "network.target" "postgresql.service" ];
     wantedBy = [ "multi-user.target" ];
