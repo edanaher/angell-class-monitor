@@ -172,5 +172,14 @@ cur = conn.cursor()
 cur.execute('SELECT version()')
 db_version = cur.fetchone()
 print("database version: ", db_version)
+
+for c in classes:
+  cur.execute("""INSERT INTO classes(name) VALUES(%s) ON CONFLICT(name) DO UPDATE SET name=EXCLUDED.name RETURNING class_id""", (c,))
+  class_id = cur.fetchone()[0]
+  print("inserting ", c, " to ", class_id)
+  for s in classes[c][1]:
+      cur.execute("""INSERT INTO sessions(class_id, week_day, start_day, end_time) VALUES (%s, %s, %s, %s)""", (class_id, s[1], s[6], s[5]))
 cur.close()
+
+conn.commit()
 conn.close()

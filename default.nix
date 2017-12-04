@@ -14,7 +14,7 @@ pkgs.python3Packages.buildPythonApplication {
     cp generate.py $out/bin
     cp template.html $out/bin
 
-    substitute setup.sh $out/bin/setup.sh --replace @SUDO@ ${pkgs.sudo} --replace @POSTGRESQL ${pkgs.postgresql} --replace @OUT@ $out
+    substitute setup.sh $out/bin/setup.sh --replace @SUDO ${pkgs.sudo} --replace @POSTGRESQL ${pkgs.postgresql} --replace @OUT $out
     chmod +x $out/bin/setup.sh
 
     mkdir -p $out/etc

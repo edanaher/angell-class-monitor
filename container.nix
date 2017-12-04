@@ -6,17 +6,17 @@ let angell-class-monitor = import ./default.nix { inherit pkgs; };
       #!/bin/sh
       mkdir -p ${web-path}/raw
 
-      now=`date -Iseconds`
-      cd ${angell-class-monitor}/bin
-      ./generate.py -o ${web-path}/new-$now.html -r ${web-path}/raw/$now
-      ln -sf ${web-path}/new-$now.html ${web-path}/index.html
+      #      now=`date -Iseconds`
+      #      cd ${angell-class-monitor}/bin
+      #      ./generate.py -o ${web-path}/new-$now.html -r ${web-path}/raw/$now
+      #      ln -sf ${web-path}/new-$now.html ${web-path}/index.html
       '';
 in
 {
   environment.systemPackages = [ angell-class-monitor pkgs.postgresql ];
 
   systemd.services.update-angell = {
-    enable = false;
+    #enable = false;
     description = "update-angell script";
     after = [ "network.target" "postgresql.service" ];
     wantedBy = [ "multi-user.target" ];
