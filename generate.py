@@ -181,7 +181,8 @@ for c in classes:
     cur.execute("""INSERT INTO sessions(class_id, week_day, end_time, created, updated) VALUES (%s, %s, %s, 'now', 'now') ON CONFLICT (class_id, week_day, end_time) DO UPDATE SET updated='now' RETURNING session_id""", (class_id, s[1], s[5]))
     session_id = cur.fetchone()[0]
     cur.execute("""SELECT period_id FROM periods WHERE session_id=%s AND start_day=%s""", (session_id, s[6]))
-    print("result is", cur.rowcount)
+    if cur.rowcount == 0:
+      print("new period: ", c, s[1], s[5], s[6])
     cur.execute("""INSERT INTO periods(session_id, start_day, created, updated) VALUES (%s, %s, 'now', 'now') ON CONFLICT (session_id, start_day) DO UPDATE SET updated='now'""", (session_id, s[6]))
 
 cur.close()
