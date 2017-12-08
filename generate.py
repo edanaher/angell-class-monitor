@@ -210,6 +210,22 @@ Visit $me to change or delete notifications
 """
 SINGLE_EMAIL_TEMPLATE = Template(SINGLE_EMAIL_MESSAGE)
 
+MULTI_EMAIL_MESSAGE = """
+The following classes have been updated:
+
+$classes
+
+Visit $me to change or delete notifications
+"""
+MULTI_EMAIL_TEMPLATE = Template(MULTI_EMAIL_MESSAGE)
+
+MULTI_CLASS_MESSAGE = """
+"$clas" at $time: starting $date
+Register at $url
+"""
+
+MULTI_CLASS_TEMPLATE = Template(MULTI_CLASS_MESSAGE)
+
 if MAILSERVER:
   with SMTP(MAILSERVER) as smtp:
     for email in emails:
@@ -225,7 +241,12 @@ if MAILSERVER:
         msg = MIMEText(SINGLE_EMAIL_TEMPLATE.substitute(**values))
         msg['Subject'] = 'Updated Angell class time for ' + updates[0][0]
       else:
-        msg = MIMEText("Multiple classes updated")
+        print(updates)
+        msgs = map(lambda u: MULTI_CLASS_TEMPLATE.substitute(clas=u[0], time=u[1][2], date=u[1][6], url=classes[u[0]][0]), updates)
+        values = {}
+        values['classes'] = "\n".join(msgs)
+        values['me'] = 'http://angell.kdf.sh'
+        msg = MIMEText(MULTI_EMAIL_TEMPLATE.substitute(**values))
         msg['Subject'] = 'Updated Angell class time for multiple classes'
       msg['From'] = 'notifications-angell@kdf.sh'
       msg['To'] = email
