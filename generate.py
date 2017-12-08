@@ -8,23 +8,28 @@ from string import Template
 import urllib
 import urllib.request
 
+from email.mime.text import MIMEText
+from smtplib import SMTP
+
 import psycopg2
 from docopt import docopt
 
 usage = """Angell page generator
-Usage: generate.py [-hd] -o=<outfile> -r=<rawdir>
+Usage: generate.py [-hd] -o=<outfile> -r=<rawdir> [-m=<mailserver>]
 
 Options:
-  -h --help      show this screen
-  -d             read from <rawdir> instead of pulling from source
-  -o <outfile>   output html file
-  -r <rawdir>    directory to output saved files (or read if -d)
+  -h --help        show this screen
+  -d               read from <rawdir> instead of pulling from source
+  -o <outfile>     output html file
+  -r <rawdir>      directory to output saved files (or read if -d)
+  -m <mailserver>  send e-mails through <mailserver>
 """
 
 args = docopt(usage)
 DEBUG=args['-d']
 RAWDIR=args['-r']
 OUTFILE=args['-o']
+MAILSERVER=args['-m']
 
 if not os.path.isdir(RAWDIR):
   os.mkdir(RAWDIR)
@@ -183,6 +188,16 @@ for c in classes:
     cur.execute("""SELECT period_id FROM periods WHERE session_id=%s AND start_day=%s""", (session_id, s[6]))
     if cur.rowcount == 0:
       print("new period: ", c, s[1], s[5], s[6])
+      if MAILSERVER:
+        with SMTP(MAILSERVER) as smtp:
+          msg = MIMEText("Testing sending e-mail")
+          msg['From'] = 'notifications-angell@kdf.sh'
+          msg['To'] = 'angell-test@kdf.sh'
+          msg['Subject'] = 'Updated Angell class time for ' + c
+          smtp.set_debuglevel(1)
+          smtp.send_message(msg)
+          smtp.quit()
+
     cur.execute("""INSERT INTO periods(session_id, start_day, created, updated) VALUES (%s, %s, 'now', 'now') ON CONFLICT (session_id, start_day) DO UPDATE SET updated='now'""", (session_id, s[6]))
 
 cur.close()
