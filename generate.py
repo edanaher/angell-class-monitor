@@ -4,6 +4,7 @@ import datetime
 import os
 import re
 import sys
+from collections import defaultdict
 from string import Template
 import urllib
 import urllib.request
@@ -178,6 +179,7 @@ cur.execute('SELECT version()')
 db_version = cur.fetchone()
 print("database version: ", db_version)
 
+emails = defaultdict(list)
 for c in classes:
   cur.execute("""INSERT INTO classes(name, created, updated) VALUES(%s, 'now', 'now') ON CONFLICT(name) DO UPDATE SET updated='now' RETURNING class_id""", (c,))
   class_id = cur.fetchone()[0]
@@ -189,14 +191,7 @@ for c in classes:
     if cur.rowcount == 0:
       print("new period: ", c, s[1], s[5], s[6])
       if MAILSERVER:
-        with SMTP(MAILSERVER) as smtp:
-          msg = MIMEText("Testing sending e-mail")
-          msg['From'] = 'notifications-angell@kdf.sh'
-          msg['To'] = 'angell-test@kdf.sh'
-          msg['Subject'] = 'Updated Angell class time for ' + c
-          smtp.set_debuglevel(1)
-          smtp.send_message(msg)
-          smtp.quit()
+        emails['angell-test@kdf.sh'].append((c, s))
 
     cur.execute("""INSERT INTO periods(session_id, start_day, created, updated) VALUES (%s, %s, 'now', 'now') ON CONFLICT (session_id, start_day) DO UPDATE SET updated='now'""", (session_id, s[6]))
 
@@ -205,3 +200,35 @@ cur.close()
 conn.commit()
 
 conn.close()
+
+SINGLE_EMAIL_MESSAGE = """
+Your class "$clas" at $time has been updated; the current session starts on $date
+
+Go to $url to register
+
+Visit $me to change or delete notifications
+"""
+SINGLE_EMAIL_TEMPLATE = Template(SINGLE_EMAIL_MESSAGE)
+
+if MAILSERVER:
+  with SMTP(MAILSERVER) as smtp:
+    for email in emails:
+      updates = emails[email]
+      if len(updates) == 1:
+        print(updates)
+        values = {}
+        values['clas'] = updates[0][0]
+        values['time'] = updates[0][1][2]
+        values['date'] = updates[0][1][6]
+        values['url'] = classes[updates[0][0]][0]
+        values['me'] = 'http://angell.kdf.sh'
+        msg = MIMEText(SINGLE_EMAIL_TEMPLATE.substitute(**values))
+        msg['Subject'] = 'Updated Angell class time for ' + updates[0][0]
+      else:
+        msg = MIMEText("Multiple classes updated")
+        msg['Subject'] = 'Updated Angell class time for multiple classes'
+      msg['From'] = 'notifications-angell@kdf.sh'
+      msg['To'] = email
+      #smtp.set_debuglevel(1)
+      smtp.send_message(msg)
+    smtp.quit()
