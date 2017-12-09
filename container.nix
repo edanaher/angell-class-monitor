@@ -46,9 +46,16 @@ in
 
   networking.firewall.enable = false;
   services.nginx.enable = true;
+  services.nginx.package = pkgs.nginx.override { modules = with pkgs.nginxModules; [ lua ]; };
   services.nginx.virtualHosts = {
     "localhost" = {
       locations."/".root = web-path;
+      locations."/api" = {
+        extraConfig = ''
+          default_type text/plain;
+          content_by_lua_file ${angell-class-monitor}/lib/handler.lua;
+        '';
+      };
     };
   };
 }

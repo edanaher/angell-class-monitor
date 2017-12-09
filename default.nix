@@ -21,6 +21,9 @@ pkgs.python3Packages.buildPythonApplication {
     cp db/*.sql $out/db/
     substitute db/run.sh $out/db/run.sh --replace @POSTGRESQL ${pkgs.postgresql} --replace @OUT $out
     chmod +x $out/db/run.sh
+
+    mkdir -p $out/lib
+    cp lib/handler.lua $out/lib/
   '';
 
   doCheck = false;
