@@ -17,8 +17,10 @@ pkgs.python3Packages.buildPythonApplication {
     substitute setup.sh $out/bin/setup.sh --replace @SUDO ${pkgs.sudo} --replace @POSTGRESQL ${pkgs.postgresql} --replace @OUT $out
     chmod +x $out/bin/setup.sh
 
-    mkdir -p $out/etc
-    cp angell.sql $out/etc/
+    mkdir -p $out/db
+    cp db/*.sql $out/db/
+    substitute db/run.sh $out/db/run.sh --replace @POSTGRESQL ${pkgs.postgresql} --replace @OUT $out
+    chmod +x $out/db/run.sh
   '';
 
   doCheck = false;
