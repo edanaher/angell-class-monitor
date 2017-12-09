@@ -14,6 +14,6 @@ for sql in *.sql; do
   if echo $already_run | grep -q $sql; then
     continue;
   fi
-  $PSQL < $sql || true
+  $PSQL < $sql
   $PSQL -c "INSERT INTO db_setup (name, created) VALUES ('${sql##*/}', 'now')"
 done
