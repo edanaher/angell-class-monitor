@@ -175,9 +175,6 @@ with open(OUTFILE, "w") as outfile:
 
 conn = psycopg2.connect(dbname = "angell", user = "angell");
 cur = conn.cursor()
-cur.execute('SELECT version()')
-db_version = cur.fetchone()
-print("database version: ", db_version)
 
 emails = defaultdict(list)
 for c in classes:
@@ -192,6 +189,9 @@ for c in classes:
       print("new period: ", c, s[1], s[5], s[6])
       if MAILSERVER:
         emails['angell-test@kdf.sh'].append((c, s))
+        cur.execute("""SELECT email FROM emails JOIN emails_sessions USING (email_id) WHERE session_id = %s""", (session_id,))
+        for email in cur:
+          emails[email[0]].append((c, s))
 
     cur.execute("""INSERT INTO periods(session_id, start_day, created, updated) VALUES (%s, %s, 'now', 'now') ON CONFLICT (session_id, start_day) DO UPDATE SET updated='now'""", (session_id, s[6]))
 
