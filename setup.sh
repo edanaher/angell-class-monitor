@@ -2,7 +2,7 @@
 
 ## This should be run (at least once) as root before the script
 
-mkdir -p $1
+mkdir -p $1/raw
 chown -R angell $1
 @SUDO/bin/sudo -u postgres @POSTGRESQL/bin/createuser angell || true
 @SUDO/bin/sudo -u postgres @POSTGRESQL/bin/createdb angell -O angell || true
