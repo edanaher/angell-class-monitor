@@ -11,6 +11,17 @@ let angell-class-monitor = import ./default.nix { inherit pkgs; };
       #      ./generate.py -o ${web-path}/new-$now.html -r ${web-path}/raw/$now
       #      ln -sf ${web-path}/new-$now.html ${web-path}/index.html
       '';
+    pgmoon = pkgs.luaPackages.buildLuaPackage rec {
+      _name  = "pgmoon";
+      version = "1.8.0";
+      name = "${_name}-${version}";
+      src = pkgs.fetchFromGitHub {
+        owner = "leafo";
+        repo = _name;
+        rev = "v${version}";
+        sha256 = "1ghhqdgm6i5vnr2bw18a19i77j9xbwbb6wn0k81ffpdqrhm0xish";
+      };
+    };
 in
 {
   environment.systemPackages = [ angell-class-monitor pkgs.postgresql ];
@@ -46,7 +57,7 @@ in
 
   networking.firewall.enable = false;
   services.nginx.enable = true;
-  services.nginx.package = pkgs.nginx.override { modules = with pkgs.nginxModules; [ lua ]; };
+  services.nginx.package = (pkgs.nginx.overrideAttrs (oldAttrs: { configureFlags = oldAttrs.configureFlags ++ ["--with-ld-opt=${pgmoon}/doesnotexit"]; } )).override { modules = with pkgs.nginxModules; [ lua ]; };
   services.nginx.virtualHosts = {
     "localhost" = {
       locations."/".root = web-path;
