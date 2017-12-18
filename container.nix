@@ -1,6 +1,8 @@
 { pkgs ? import <nixpkgs> {}, config, options, lib, modulesPath }:
 
-let angell-class-monitor = import ./default.nix { inherit pkgs; };
+let angell-packages = import ./default.nix { inherit pkgs; };
+    angell-class-monitor = angell-packages.angell-class-monitor;
+    pgmoon = angell-packages.pgmoon;
     web-path = "/var/run/angell-classes";
     angell-wrapper = pkgs.writeScriptBin "angell-class-wrapper" ''
       #!/bin/sh
@@ -57,7 +59,10 @@ in
 
   networking.firewall.enable = false;
   services.nginx.enable = true;
-  services.nginx.package = (pkgs.nginx.overrideAttrs (oldAttrs: { configureFlags = oldAttrs.configureFlags ++ ["--with-ld-opt=${pgmoon}/doesnotexit"]; } )).override { modules = with pkgs.nginxModules; [ lua ]; };
+  services.nginx.package = (pkgs.nginx.overrideAttrs (oldAttrs: { configureFlags = oldAttrs.configureFlags ++ [/*"--with-ld-opt=${pgmoon}/doesnotexit"*/]; } )).override { modules = with pkgs.nginxModules; [ lua ]; };
+  services.nginx.appendHttpConfig = ''
+    lua_package_path ";;${pgmoon}/lib/?.lua;${pgmoon}/lib/?/init.lua";
+  '';
   services.nginx.virtualHosts = {
     "localhost" = {
       locations."/".root = web-path;
