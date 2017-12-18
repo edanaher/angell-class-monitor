@@ -2,7 +2,7 @@
 
 ## This should be run as angell to run the db setup
 
-PSQL="@POSTGRESQL/bin/psql angell"
+PSQL="echo @PASSWORD | @POSTGRESQL/bin/psql angell"
 
 if ! $PSQL -c '\dt' | grep -q db_setup; then
   $PSQL -c "CREATE TABLE db_setup(name varchar PRIMARY KEY, created timestamp NOT NULL)";

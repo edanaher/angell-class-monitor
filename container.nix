@@ -1,6 +1,7 @@
 { pkgs ? import <nixpkgs> {}, config, options, lib, modulesPath }:
 
-let angell-packages = import ./default.nix { inherit pkgs; };
+let angell-packages = import ./default.nix { inherit pkgs angell-password; };
+    angell-password = "secure-angell";
     angell-class-monitor = angell-packages.angell-class-monitor;
     pgmoon = angell-packages.pgmoon;
     web-path = "/var/run/angell-classes";
@@ -50,8 +51,8 @@ in
 
   services.postgresql.enable = true;
   services.postgresql.authentication = ''
-    local all all peer
     local angell angell md5
+    local all all peer
   '';
 
   users.users.angell = {
@@ -71,6 +72,7 @@ in
         extraConfig = ''
           default_type text/plain;
           content_by_lua_file ${angell-class-monitor}/lib/handler.lua;
+          set $angell_password ${angell-password};
         '';
       };
     };

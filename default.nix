@@ -1,4 +1,4 @@
-{ pkgs ? import <nixpkgs> {} }:
+{ pkgs ? import <nixpkgs> {}, angell-password ? "angell" }:
 
 rec {
   angell-class-monitor = pkgs.python3Packages.buildPythonApplication {
@@ -15,12 +15,12 @@ rec {
       cp generate.py $out/bin
       cp template.html $out/bin
 
-      substitute setup.sh $out/bin/setup.sh --replace @SUDO ${pkgs.sudo} --replace @POSTGRESQL ${pkgs.postgresql} --replace @OUT $out
+      substitute setup.sh $out/bin/setup.sh --replace @SUDO ${pkgs.sudo} --replace @POSTGRESQL ${pkgs.postgresql} --replace @OUT $out --replace @PASSWORD ${angell-password}
       chmod +x $out/bin/setup.sh
 
       mkdir -p $out/db
       cp db/*.sql $out/db/
-      substitute db/run.sh $out/db/run.sh --replace @POSTGRESQL ${pkgs.postgresql} --replace @OUT $out
+      substitute db/run.sh $out/db/run.sh --replace @POSTGRESQL ${pkgs.postgresql} --replace @OUT $out --replace @PASSWORD ${angell-password}
       chmod +x $out/db/run.sh
 
       mkdir -p $out/lib
