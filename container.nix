@@ -51,6 +51,7 @@ in
   services.postgresql.enable = true;
   services.postgresql.authentication = ''
     local all all peer
+    local angell angell md5
   '';
 
   users.users.angell = {
