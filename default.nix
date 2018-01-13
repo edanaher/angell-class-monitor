@@ -141,12 +141,29 @@ rec {
    };
 
    lua-resty-random = pkgs.luajitPackages.buildLuaPackage rec {
-     _name  = "lau-resty-random";
+     _name  = "lua-resty-random";
      version = "17b604f7f7dd217557ca548fc1a9a0d373386480";
      name = "${_name}-${version}";
      src = pkgs.fetchurl {
        url = "https://github.com/bungle/lua-resty-random/archive/17b604f7f7dd217557ca548fc1a9a0d373386480.tar.gz";
        sha256 = "0pw1hpbbsaysv014cw3zndqyx3p5xlhkvwybc5bsfdgm8srbwdlb";
+     };
+
+     installPhase = ''
+      mkdir -p $out/lib
+      cp -a lib/resty $out/lib/
+     '';
+   };
+
+   lua-resty-cookie = pkgs.luajitPackages.buildLuaPackage rec {
+     _name  = "lua-resty-cookie";
+     version = "0.1.0";
+     name = "${_name}-${version}";
+     src = pkgs.fetchFromGitHub {
+       owner = "cloudflare";
+       repo = _name;
+       rev = "v${version}";
+       sha256 = "03ch2gwsvvwhz3hs0m2fvrhc5899irlmakdafxvamchb8wngxkpf";
      };
 
      installPhase = ''

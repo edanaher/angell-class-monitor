@@ -1,5 +1,6 @@
 local pgmoon = require("pgmoon")
 local random = require("resty.random")
+local ck = require("resty.cookie")
 local pg = pgmoon.new {
   host = "127.0.0.1";
   port = "5432";
@@ -25,8 +26,8 @@ function verify_email(email, token)
   if res == nil then return ngx.say("SQL ERROR: " .. tostring(err)) end
   if #res == 0 then return ngx.say("No such e-mail registered: " .. email) end
   local id = res[1].email_id
-  ngx.say("Found e-mail " .. tostring(id))
-  ngx.say("SELECT COUNT(*) FROM tokens WHERE email_id = " .. pg:escape_literal(id) .. " AND value = " .. pg:escape_literal(token))
+  --ngx.say("Found e-mail " .. tostring(id))
+  --ngx.say("SELECT COUNT(*) FROM tokens WHERE email_id = " .. pg:escape_literal(id) .. " AND value = " .. pg:escape_literal(token))
   local res, err = pg:query("SELECT COUNT(*) FROM tokens WHERE email_id = " .. pg:escape_literal(id) .. " AND value = " .. pg:escape_literal(token) .. " AND status = 'new'")
   if res == nil then return ngx.say("SQL ERROR: " .. tostring(err)) end
   if res[1].count == 0 then return ngx.say("Invalid token " .. token .. " for e-mail address " .. email) end
@@ -35,8 +36,23 @@ function verify_email(email, token)
   local res, err = pg:query("UPDATE tokens SET status = 'used', cookie = '" .. cookie  .. "', updated = 'now' WHERE email_id = " .. pg:escape_literal(id) .. " AND value = " .. pg:escape_literal(token) .. " AND status = 'new'")
   if res == nil then return ngx.say("SQL ERROR: " .. tostring(err)) end
 
+
+  local c = ck:new()
+  if not c then return ngx.say("Cookie error: ", err) end
+  --if not cookie then return ngx.log(ngx.ERR, err) end
+  local ok, err = c:set {
+    key = "token", value = cookie, path = "/",
+    domain = "angell.kdf.sh", secure = true, httponly = true
+  }
+  if not ok then return ngx.say("Cookie error: ", err) end
+  local ok, err = c:set {
+    key = "email", value = email, path = "/",
+    domain = "angell.kdf.sh", secure = true, httponly = true
+  }
+  if not ok then return ngx.say("Cookie error: ", err) end
   ngx.say("Verified e-mail: " .. email)
   ngx.say("Cookie is: " .. cookie)
+  ngx.say("Cookie should be set")
 end
 
 function dispatch() 
@@ -52,10 +68,10 @@ end
 
 assert(pg:connect())
 local res = assert(pg:query("SELECT * FROM classes"))
-ngx.say("hi there.  Classes are:")
+--[[ngx.say("hi there.  Classes are:")
 for _, row in ipairs(res) do
   ngx.say(tostring(row.name))
-end
+end]]
 
 dispatch()
 
