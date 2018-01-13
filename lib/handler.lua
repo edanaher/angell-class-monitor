@@ -42,12 +42,12 @@ function verify_email(email, token)
   --if not cookie then return ngx.log(ngx.ERR, err) end
   local ok, err = c:set {
     key = "token", value = cookie, path = "/",
-    domain = "angell.kdf.sh", secure = true, httponly = true
+    httponly = true
   }
   if not ok then return ngx.say("Cookie error: ", err) end
   local ok, err = c:set {
     key = "email", value = email, path = "/",
-    domain = "angell.kdf.sh", secure = true, httponly = true
+    httponly = true
   }
   if not ok then return ngx.say("Cookie error: ", err) end
   ngx.say("Verified e-mail: " .. email)
@@ -64,6 +64,17 @@ function dispatch()
   if email and token then
     return verify_email(email, token)
   end
+  if ngx.var.request_uri == "/" then
+    local c = ck:new()
+    if not c then return ngx.say("Cookie error: ", err) end
+    local email = c:get("email")
+    local token = c:get("token")
+    if email and token then
+      return ngx.say("Found " .. email .. " and " .. token)
+    end
+    return ngx.exec("/_static/")
+  end
+  ngx.exit(ngx.HTTP_NOT_FOUND)
 end
 
 assert(pg:connect())

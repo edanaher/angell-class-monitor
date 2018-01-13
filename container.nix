@@ -58,8 +58,8 @@ in
   '';
   services.nginx.virtualHosts = {
     "localhost" = {
-      locations."/".root = web-path;
-      locations."/api" = {
+      locations."/_static".alias = web-path;
+      locations."/" = {
         extraConfig = ''
           default_type text/plain;
           content_by_lua_file ${angell-class-monitor}/lib/handler.lua;
