@@ -29,7 +29,7 @@ end
 function register_email(email)
   ngx.say("'sending' email to " .. email)
   local res, err = pg:query("INSERT INTO emails (email, status, created, updated) VALUES (" .. pg:escape_literal(email) .. ", 'new', 'now', 'now') ON CONFLICT (email) DO UPDATE SET updated='now' RETURNING email_id")
-  if res == nil then ngx.say("SQL ERROR: " .. tostring(err)) end
+  if res == nil then return ngx.say("SQL ERROR: " .. tostring(err)) end
   local id = res[1].email_id
   ngx.say("email id is " .. tostring(id))
 
