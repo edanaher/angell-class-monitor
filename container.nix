@@ -4,6 +4,7 @@ let angell-packages = import ./default.nix { inherit pkgs angell-password; };
     angell-password = "secure-angell";
     angell-class-monitor = angell-packages.angell-class-monitor;
     pgmoon = angell-packages.pgmoon;
+    lua-resty-random = angell-packages.lua-resty-random;
     web-path = "/var/run/angell-classes";
     angell-wrapper = pkgs.writeScriptBin "angell-class-wrapper" ''
       #!/bin/sh
@@ -52,7 +53,7 @@ in
   services.nginx.enable = true;
   services.nginx.package = (pkgs.nginx.overrideAttrs (oldAttrs: { configureFlags = oldAttrs.configureFlags ++ [/*"--with-ld-opt=${pgmoon}/doesnotexit"*/]; } )).override { modules = with pkgs.nginxModules; [ lua ]; };
   services.nginx.appendHttpConfig = ''
-    lua_package_path ";;${pgmoon}/lib/?.lua;${pgmoon}/lib/?/init.lua";
+    lua_package_path ";;${pgmoon}/lib/?.lua;${pgmoon}/lib/?/init.lua;${lua-resty-random}/lib/?.lua";
   '';
   services.nginx.virtualHosts = {
     "localhost" = {

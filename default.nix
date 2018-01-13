@@ -140,4 +140,18 @@ rec {
      '';
    };
 
+   lua-resty-random = pkgs.luajitPackages.buildLuaPackage rec {
+     _name  = "lau-resty-random";
+     version = "17b604f7f7dd217557ca548fc1a9a0d373386480";
+     name = "${_name}-${version}";
+     src = pkgs.fetchurl {
+       url = "https://github.com/bungle/lua-resty-random/archive/17b604f7f7dd217557ca548fc1a9a0d373386480.tar.gz";
+       sha256 = "0pw1hpbbsaysv014cw3zndqyx3p5xlhkvwybc5bsfdgm8srbwdlb";
+     };
+
+     installPhase = ''
+      mkdir -p $out/lib
+      cp -a lib/resty $out/lib/
+     '';
+   };
 }

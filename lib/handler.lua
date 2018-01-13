@@ -1,4 +1,5 @@
 local pgmoon = require("pgmoon")
+local random = require("resty.random")
 local pg = pgmoon.new {
   host = "127.0.0.1";
   port = "5432";
@@ -7,25 +8,6 @@ local pg = pgmoon.new {
   password = ngx.var.angell_password or "angell";
 }
 
-string.random = function(len)
-  local chars = {}
-  for i = string.byte('A'), string.byte('Z') do
-    chars[#chars + 1] = string.char(i)
-  end
-  for i = string.byte('a'), string.byte('z') do
-    chars[#chars + 1] = string.char(i)
-  end
-  for i = string.byte('0'), string.byte('9') do
-    chars[#chars + 1] = string.char(i)
-  end
-
-  local res = {}
-  for i = 1, len do
-    res[#res + 1] = chars[math.random(#chars)]
-  end
-  return table.concat(res)
-end
-
 function register_email(email)
   ngx.say("'sending' email to " .. email)
   local res, err = pg:query("INSERT INTO emails (email, status, created, updated) VALUES (" .. pg:escape_literal(email) .. ", 'new', 'now', 'now') ON CONFLICT (email) DO UPDATE SET updated='now' RETURNING email_id")
@@ -33,9 +15,28 @@ function register_email(email)
   local id = res[1].email_id
   ngx.say("email id is " .. tostring(id))
 
-  local res, err = pg:query("INSERT INTO tokens (email_id, value, status, created, updated) VALUES (" .. tostring(id) .. ", ".. pg:escape_literal(string.random(12)) .. ", 'new', 'now', 'now') RETURNING value")
+  local res, err = pg:query("INSERT INTO tokens (email_id, value, status, created, updated) VALUES (" .. tostring(id) .. ", ".. pg:escape_literal(random.token(12)) .. ", 'new', 'now', 'now') RETURNING value")
   if res == nil then ngx.say("SQL ERROR: " .. tostring(err)) end
   ngx.say("token is " .. tostring(res[1].value))
+end
+
+function verify_email(email, token)
+  local res, err = pg:query("SELECT email_id FROM emails WHERE email = " .. pg:escape_literal(email))
+  if res == nil then return ngx.say("SQL ERROR: " .. tostring(err)) end
+  if #res == 0 then return ngx.say("No such e-mail registered: " .. email) end
+  local id = res[1].email_id
+  ngx.say("Found e-mail " .. tostring(id))
+  ngx.say("SELECT COUNT(*) FROM tokens WHERE email_id = " .. pg:escape_literal(id) .. " AND value = " .. pg:escape_literal(token))
+  local res, err = pg:query("SELECT COUNT(*) FROM tokens WHERE email_id = " .. pg:escape_literal(id) .. " AND value = " .. pg:escape_literal(token) .. " AND status = 'new'")
+  if res == nil then return ngx.say("SQL ERROR: " .. tostring(err)) end
+  if res[1].count == 0 then return ngx.say("Invalid token " .. token .. " for e-mail address " .. email) end
+
+  local cookie = random.token(32)
+  local res, err = pg:query("UPDATE tokens SET status = 'used', cookie = '" .. cookie  .. "', updated = 'now' WHERE email_id = " .. pg:escape_literal(id) .. " AND value = " .. pg:escape_literal(token) .. " AND status = 'new'")
+  if res == nil then return ngx.say("SQL ERROR: " .. tostring(err)) end
+
+  ngx.say("Verified e-mail: " .. email)
+  ngx.say("Cookie is: " .. cookie)
 end
 
 function dispatch() 
@@ -44,9 +45,8 @@ function dispatch()
     return register_email(email)
   end
   email, token = ngx.var.request_uri:match("/api/email/(.+)/verify/(.+)")
-  if email then
-    ngx.say("'verifying' email to " .. email .. " with " .. token)
-    return
+  if email and token then
+    return verify_email(email, token)
   end
 end
 
