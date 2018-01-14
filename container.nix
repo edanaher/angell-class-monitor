@@ -4,6 +4,7 @@ let angell-packages = import ./default.nix { inherit pkgs angell-password; templ
     angell-password = "secure-angell";
     angell-class-monitor = angell-packages.angell-class-monitor;
     web-path = "/var/run/angell-classes";
+    template-path = "${web-path}/templates";
     angell-wrapper = pkgs.writeScriptBin "angell-class-wrapper" ''
       #!/bin/sh
       mkdir -p ${web-path}/raw
@@ -13,9 +14,9 @@ let angell-packages = import ./default.nix { inherit pkgs angell-password; templ
       now=2018-01-12T18:53:43-08:00
       cd ${angell-class-monitor}/bin
       #./generate.py -o ${web-path}/new-$now.html -r ${web-path}/raw/$now
-      ./generate.py -o ${web-path}/new-$now.html -t ${web-path}/templates/new-$now.html -r ${web-path}/raw/$now -d
+      ./generate.py -o ${web-path}/new-$now.html -t ${template-path}/new-$now.html -r ${web-path}/raw/$now -d
       ln -sf ${web-path}/new-$now.html ${web-path}/index.html
-      ln -sf ${web-path}/templates/new-$now.html ${web-path}/templates/index.html
+      ln -sf ${template-path}/new-$now.html ${template-path}/index.html
       '';
 in
 {
@@ -65,7 +66,7 @@ in
           default_type text/plain;
           content_by_lua_file ${angell-class-monitor}/lib/handler.lua;
           set $angell_password ${angell-password};
-          set $template_root ${web-path}/templates;
+          set $template_root ${template-path};
         '';
       };
     };
