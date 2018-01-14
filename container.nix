@@ -1,6 +1,6 @@
 { pkgs ? import <nixpkgs> {}, config, options, lib, modulesPath }:
 
-let angell-packages = import ./default.nix { inherit pkgs angell-password; };
+let angell-packages = import ./default.nix { inherit pkgs angell-password; template-path = "${web-path}/templates"; };
     angell-password = "secure-angell";
     angell-class-monitor = angell-packages.angell-class-monitor;
     web-path = "/var/run/angell-classes";
@@ -65,6 +65,7 @@ in
           default_type text/plain;
           content_by_lua_file ${angell-class-monitor}/lib/handler.lua;
           set $angell_password ${angell-password};
+          set $template_root ${web-path}/templates;
         '';
       };
     };

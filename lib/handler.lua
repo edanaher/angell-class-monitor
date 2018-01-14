@@ -1,6 +1,8 @@
 local pgmoon = require("pgmoon")
 local random = require("resty.random")
 local ck = require("resty.cookie")
+local template = require("resty.template")
+
 local pg = pgmoon.new {
   host = "127.0.0.1";
   port = "5432";
@@ -70,7 +72,9 @@ function dispatch()
     local email = c:get("email")
     local token = c:get("token")
     if email and token then
-      return ngx.say("Found " .. email .. " and " .. token)
+      -- TODO: Check token
+      ngx.header.content_type = 'text/html';
+      return ngx.say(template.render("index.html", { userinfo = "Logged in as " .. email .. "<hr />" }))
     end
   end
   return ngx.exec("/_static" .. ngx.var.request_uri)

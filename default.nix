@@ -1,4 +1,4 @@
-{ pkgs ? import <nixpkgs> {}, angell-password ? "angell" }:
+{ pkgs ? import <nixpkgs> {}, angell-password ? "angell", template-path }:
 
 let lua-resty-package = { name, version, github-owner, sha256 }:
       let pkg-name = name; in
@@ -13,6 +13,7 @@ let lua-resty-package = { name, version, github-owner, sha256 }:
            inherit sha256;
          };
 
+         dontBuild = true;
          installPhase = ''
           mkdir -p $out/lib
           cp -a lib/resty $out/lib/
@@ -31,6 +32,13 @@ let lua-resty-package = { name, version, github-owner, sha256 }:
      version = "v0.1.0";
      github-owner = "cloudflare";
      sha256 = "03ch2gwsvvwhz3hs0m2fvrhc5899irlmakdafxvamchb8wngxkpf";
+   };
+
+   lua-resty-template = lua-resty-package {
+     name  = "template";
+     version = "v1.9";
+     github-owner = "bungle";
+     sha256 = "0ga1kcpn34w0cxd35spa5cdkr4jsvqs6f4sdjcis19vczdasx16s";
    };
 
    alt-getopt = pkgs.luajitPackages.buildLuaPackage rec {
@@ -152,6 +160,6 @@ in rec {
     };
   };
 
-  lua-path = "${pgmoon}/lib/?.lua;${pgmoon}/lib/?/init.lua;${lua-resty-random}/lib/?.lua;${lua-resty-cookie}/lib/?.lua";
+  lua-path = "${pgmoon}/lib/?.lua;${pgmoon}/lib/?/init.lua;${lua-resty-random}/lib/?.lua;${lua-resty-cookie}/lib/?.lua;${lua-resty-template}/lib/?.lua";
 
 }

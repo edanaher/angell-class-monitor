@@ -173,7 +173,7 @@ template = Template(templateContents)
 now = list(os.popen('TZ=America/New_York date'))[0].rstrip()
 output = template.substitute(now=now, classes = "\n".join(classData))
 with open(OUTFILE, "w") as outfile:
-  outfile.write(re.sub("{{[^}]*}}", "", output))
+  outfile.write(re.sub("{\*[^}]*\*}", "", output))
 with open(TEMPLATEFILE, "w") as outfile:
   outfile.write(output)
 
