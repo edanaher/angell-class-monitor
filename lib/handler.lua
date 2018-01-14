@@ -72,9 +72,8 @@ function dispatch()
     if email and token then
       return ngx.say("Found " .. email .. " and " .. token)
     end
-    return ngx.exec("/_static/")
   end
-  ngx.exit(ngx.HTTP_NOT_FOUND)
+  return ngx.exec("/_static" .. ngx.var.request_uri)
 end
 
 assert(pg:connect())
