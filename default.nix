@@ -128,6 +128,7 @@ in rec {
     installPhase = ''
       mkdir -p $out/bin/
       cp generate.py $out/bin
+      substitute generate.py $out/bin/generate.py --replace @PASSWORD ${angell-password}
       cp template.html $out/bin
 
       substitute setup.sh $out/bin/setup.sh --replace @SUDO ${pkgs.sudo} --replace @POSTGRESQL ${pkgs.postgresql} --replace @OUT $out --replace @PASSWORD ${angell-password}

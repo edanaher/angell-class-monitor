@@ -16,20 +16,22 @@ import psycopg2
 from docopt import docopt
 
 usage = """Angell page generator
-Usage: generate.py [-hd] -o=<outfile> -r=<rawdir> [-m=<mailserver>]
+Usage: generate.py [-hd] -o=<outfile> -t=<templatefile> -r=<rawdir> [-m=<mailserver>]
 
 Options:
-  -h --help        show this screen
-  -d               read from <rawdir> instead of pulling from source
-  -o <outfile>     output html file
-  -r <rawdir>      directory to output saved files (or read if -d)
-  -m <mailserver>  send e-mails through <mailserver>
+  -h --help         show this screen
+  -d                read from <rawdir> instead of pulling from source
+  -o <outfile>      output html file
+  -t <templatefile> output templated html file
+  -r <rawdir>       directory to output saved files (or read if -d)
+  -m <mailserver>   send e-mails through <mailserver>
 """
 
 args = docopt(usage)
 DEBUG=args['-d']
 RAWDIR=args['-r']
 OUTFILE=args['-o']
+TEMPLATEFILE=args['-t']
 MAILSERVER=args['-m']
 
 if not os.path.isdir(RAWDIR):
@@ -171,9 +173,11 @@ template = Template(templateContents)
 now = list(os.popen('TZ=America/New_York date'))[0].rstrip()
 output = template.substitute(now=now, classes = "\n".join(classData))
 with open(OUTFILE, "w") as outfile:
+  outfile.write(re.sub("{{[^}]*}}", "", output))
+with open(TEMPLATEFILE, "w") as outfile:
   outfile.write(output)
 
-conn = psycopg2.connect(dbname = "angell", user = "angell");
+conn = psycopg2.connect(dbname = "angell", user = "angell", password = "@PASSWORD");
 cur = conn.cursor()
 
 emails = defaultdict(list)

@@ -7,11 +7,15 @@ let angell-packages = import ./default.nix { inherit pkgs angell-password; };
     angell-wrapper = pkgs.writeScriptBin "angell-class-wrapper" ''
       #!/bin/sh
       mkdir -p ${web-path}/raw
+      mkdir -p ${web-path}/templates
 
-      #      now=`date -Iseconds`
-      #      cd ${angell-class-monitor}/bin
-      #      ./generate.py -o ${web-path}/new-$now.html -r ${web-path}/raw/$now
-      #      ln -sf ${web-path}/new-$now.html ${web-path}/index.html
+      #now=`date -Iseconds`
+      now=2018-01-12T18:53:43-08:00
+      cd ${angell-class-monitor}/bin
+      #./generate.py -o ${web-path}/new-$now.html -r ${web-path}/raw/$now
+      ./generate.py -o ${web-path}/new-$now.html -t ${web-path}/templates/new-$now.html -r ${web-path}/raw/$now -d
+      ln -sf ${web-path}/new-$now.html ${web-path}/index.html
+      ln -sf ${web-path}/templates/new-$now.html ${web-path}/templates/index.html
       '';
 in
 {
