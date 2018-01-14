@@ -66,15 +66,31 @@ function dispatch()
   if email and token then
     return verify_email(email, token)
   end
+  if(ngx.var.request_uri:match("/api/logout")) then
+    local c = ck:new()
+    if not c then return ngx.say("Cookie error: ", err) end
+    --if not cookie then return ngx.log(ngx.ERR, err) end
+    local ok, err = c:set {
+      key = "email", value = "", path = "/",
+      httponly = true
+    }
+    if not ok then return ngx.say("Cookie error: ", err) end
+    local ok, err = c:set {
+      key = "token", value = "", path = "/",
+      httponly = true
+    }
+    if not ok then return ngx.say("Cookie error: ", err) end
+    return  ngx.say("OK")
+  end
   if ngx.var.request_uri == "/" then
     local c = ck:new()
     if not c then return ngx.say("Cookie error: ", err) end
     local email = c:get("email")
     local token = c:get("token")
-    if email and token then
+    if email and token and email ~= "" then
       -- TODO: Check token
       ngx.header.content_type = 'text/html';
-      return ngx.say(template.render("index.html", { userinfo = "Logged in as " .. email .. "<hr />" }))
+      return ngx.say(template.render("index.html", { userinfo = "Logged in as " .. email .. "&nbsp;&nbsp;<a href=\"/api/logout\">logout</a><hr />" }))
     end
   end
   return ngx.exec("/_static" .. ngx.var.request_uri)
