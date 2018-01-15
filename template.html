@@ -66,7 +66,7 @@
         location.reload();
       }
       else {
-        feedback.innerHTML = "Error singing in: " + this.response;
+        feedback.innerHTML = "Error signing in: " + this.response;
       }
     }
     function verify() {
@@ -78,6 +78,12 @@
       req.send();
       var feedback = document.getElementById("token-feedback");
       feedback.innerHTML = "Signing in...";
+    }
+    function logout() {
+      var req = new XMLHttpRequest();
+      req.addEventListener("load", function() { location.reload(); });
+      req.open("GET", "/api/logout");
+      req.send();
     }
   </script>
   </head>

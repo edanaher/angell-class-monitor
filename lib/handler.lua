@@ -75,7 +75,7 @@ function dispatch()
       httponly = true
     }
     if not ok then return ngx.say("Cookie error: ", err) end
-    return  ngx.say("OK")
+    return ngx.say("OK")
   end
   if ngx.var.request_uri == "/" then
     local c = ck:new()
@@ -85,7 +85,7 @@ function dispatch()
     if email and token and email ~= "" then
       -- TODO: Check token
       ngx.header.content_type = 'text/html';
-      return ngx.say(template.render("index.html", { userinfo = "Logged in as " .. email .. "&nbsp;&nbsp;<a href=\"/api/logout\">logout</a><hr />" }))
+      return ngx.say(template.render("index.html", { userinfo = "Logged in as " .. email .. "&nbsp;&nbsp;<button onclick=\"logout()\">logout</button><hr />" }))
     end
   end
   return ngx.exec("/_static" .. ngx.var.request_uri)
