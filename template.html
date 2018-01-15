@@ -42,8 +42,51 @@
         margin-top: 4px;
       }
     </style>
+  <script type="text/javascript">
+    function registered() {
+      var feedback = document.getElementById("email-feedback");
+      if(this.response == "OK")
+        feedback.innerHTML = "Email sent";
+      else
+        feedback.innerHTML = "Error sending e-mail";
+    }
+    function register() {
+      var email = document.getElementById("email").value;
+      var req = new XMLHttpRequest();
+      req.addEventListener("load", registered);
+      req.open("GET", "/api/email/" + email + "/register");
+      req.send();
+      var feedback = document.getElementById("email-feedback");
+      feedback.innerHTML = "Sending e-mail...";
+    }
+    function verified() {
+      var feedback = document.getElementById("token-feedback");
+      if(this.response == "OK") {
+        feedback.innerHTML = "Signed in... refreshing";
+        location.reload();
+      }
+      else {
+        feedback.innerHTML = "Error singing in: " + this.response;
+      }
+    }
+    function verify() {
+      var email = document.getElementById("email").value;
+      var token = document.getElementById("token").value;
+      var req = new XMLHttpRequest();
+      req.addEventListener("load", verified);
+      req.open("GET", "/api/email/" + email + "/verify/" + token);
+      req.send();
+      var feedback = document.getElementById("token-feedback");
+      feedback.innerHTML = "Signing in...";
+    }
+  </script>
   </head>
   <body>
+    *{
+    <p> email: <input id="email" />  <button onclick="register()">Email me a token</button><span id="email-feedback" /></p>
+    <p> token: <input id="token" />  <button onclick="verify()">Sign in with token</button><span id="token-feedback" /></p>
+    <hr>
+    }*
     {* userinfo *}
     <p>This list is unofficial and automatically generated, and as such may be incorrect or out of date.  Links should take you to registration, but check everything before signing up.  No warranty, use at your own risk, <a href="http://catb.org/jargon/html/N/nasal-demons.html">nasal demons</a>, etc.</p>
     <p>Class listings taken from the MSPCA Angell's <a href="https://www.mspca.org/animal_care/boston-dog-training/">Boston Dog and Cat Training Page</a>, schedules taken from individual class pages linked.</p>
