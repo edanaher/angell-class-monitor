@@ -80,6 +80,9 @@ def checkDate(strDate):
   now = datetime.date.today()
   date = datetime.date(now.year, month, day)
   delta = date - now
+  if delta > datetime.timedelta(6*30):
+    date = datetime.date(now.year - 1, month, day)
+    delta = date - now
   if delta < datetime.timedelta(-6*30):
     date = datetime.date(now.year + 1, month, day)
     delta = date - now
