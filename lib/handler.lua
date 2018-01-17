@@ -52,6 +52,34 @@ function verify_email(email, token)
   ngx.print("OK")
 end
 
+function verify_cookie()
+  local c = ck:new()
+  if not c then return ngx.say("Cookie error: " .. err) end
+  local email, err = c:get "email"
+  if err then return ngx.say("Cookie error: " .. err) end
+  -- TODO: verify token
+  return email
+end
+
+function watch_session(session)
+  local email = verify_cookie()
+  if not email then return ngx.say("Invalid cookie; not signed in or expired") end
+  ngx.say("Valid token for " .. email)
+
+  local res, err = pg:query("SELECT email_id FROM emails WHERE email=" .. pg:escape_literal(email))
+  if not res then return ngx.say("SQL error: " .. err) end
+  if #res == 1 then ngx.say("No such email: " .. email) end
+  email_id = res[1].email_id
+
+  local res, err = pg:query("SELECT COUNT(*) FROM sessions WHERE session_id=" .. pg:escape_literal(tonumber(session)))
+  if not res then return ngx.say("SQL error: " .. err) end
+  if res.count == 0 then return ngx.say("No such session: " .. session) end
+
+  local res, err = pg:query("INSERT INTO emails_sessions (email_id, session_id, created, updated) VALUES (" .. pg:escape_literal(email_id) .. ", " .. pg:escape_literal(tonumber(session)) .. ", 'now', 'now')")
+  if not res then return ngx.say("SQL error: " .. err) end
+  ngx.say "OK"
+end
+
 function dispatch() 
   email = ngx.var.request_uri:match("/api/email/(.+)/register")
   if email then
@@ -60,6 +88,10 @@ function dispatch()
   email, token = ngx.var.request_uri:match("/api/email/(.+)/verify/(.+)")
   if email and token then
     return verify_email(email, token)
+  end
+  session = ngx.var.request_uri:match("/api/watch/(.+)")
+  if session then
+    return watch_session(session)
   end
   if(ngx.var.request_uri:match("/api/logout")) then
     local c = ck:new()
