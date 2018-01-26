@@ -99,8 +99,8 @@ def checkDate(strDate):
     return 1
 
 def classify(session):
-  startDiff = checkDate(session[6])
-  endDiff = checkDate(session[7])
+  startDiff = checkDate(session.startDay)
+  endDiff = checkDate(session.endDay)
   if startDiff == None or endDiff == None:
     return 'class="unscheduled"'
   if startDiff == None and endDiff == None:
@@ -115,6 +115,13 @@ def classify(session):
     return 'class="almost-done"'
   return ''
 
+class Class:
+  def __init__(self, url):
+    self.url = url
+    self.sessions = []
+
+class Session:
+  prefix = ""
 
 classes = {}
 for u in urls:
@@ -129,45 +136,47 @@ for u in urls:
   if title_line == None:
     continue
   name = title_line.group(1)
-  classes[name] = (u, [])
+  classes[name] = Class(u)
   for c in re.finditer('option value=[^>]*>([^<]*)<', lines):
+    session = Session()
     desc = c.group(1)
-    day = extractMatch(re.search("|".join(days), desc))
+    session.day = extractMatch(re.search("|".join(days), desc))
     dateRegex = "[A-Z][a-z]+\s+[0-9][0-9]?[a-z]*"
-    period = extractMatch(re.search(dateRegex + "\s*-\s*" + dateRegex + "|[Nn]ot [Cc]urrently [Aa]vailable|TBD|See you [^)]*|rolling|[Cc]urrently [Uu]navailable", desc))
-    startDay = extractMatch(re.search("^" + dateRegex, period))
-    endDay = extractMatch(re.search(dateRegex + "$", period))
+    session.period = extractMatch(re.search(dateRegex + "\s*-\s*" + dateRegex + "|[Nn]ot [Cc]urrently [Aa]vailable|TBD|See you [^)]*|rolling|[Cc]urrently [Uu]navailable", desc))
+    session.startDay = extractMatch(re.search("^" + dateRegex, session.period))
+    session.endDay = extractMatch(re.search(dateRegex + "$", session.period))
     timeRegex = "[0-9]+(:[0-9]+)?[\sAPM]*"
-    timeString = extractMatch(re.search(timeRegex + "\s*-\s*" + timeRegex, desc), "Unknown")
-    endTimeSp = extractMatch(re.search(timeRegex + "$", timeString), "NoEndTime")
-    endTime = re.sub("^([0-9]*)([AP]M)", r"\1:00\2", re.sub("\s", "", endTimeSp))
-    noClass = extractMatch(re.search("[Nn]o\s*[Cc]lass\s*[^)]*", desc), "")
-    remainder = re.split("|".join([day, timeString, period, noClass]), desc)
-    prefix = ""
+    session.timeString = extractMatch(re.search(timeRegex + "\s*-\s*" + timeRegex, desc), "Unknown")
+    endTimeSp = extractMatch(re.search(timeRegex + "$", session.timeString), "NoEndTime")
+    session.endTime = re.sub("^([0-9]*)([AP]M)", r"\1:00\2", re.sub("\s", "", endTimeSp))
+    session.noClass = extractMatch(re.search("[Nn]o\s*[Cc]lass\s*[^)]*", desc), "")
+    remainder = re.split("|".join([session.day, session.timeString, session.period, session.noClass]), desc)
     if len(remainder[0]) > 2:
-      prefix = re.sub(":$", "", remainder[0].rstrip())
-    remainder = re.sub("|".join([day, timeString, period, prefix, noClass]), "", desc)
-    remainders = [r.group(0) for r in re.finditer('\w\w\w[^)]*', remainder)]
-    classes[name][1].append((prefix, day, timeString, period, noClass, endTime, startDay, endDay, remainders, c.group(1)))
+      session.prefix = re.sub(":$", "", remainder[0].rstrip())
+    remainder = re.sub("|".join([session.day, session.timeString, session.period, session.prefix, session.noClass]), "", desc)
+    session.remainders = [r.group(0) for r in re.finditer('\w\w\w[^)]*', remainder)]
+    session.desc = desc
+    classes[name].sessions.append(session)
 
 classData = []
 for c in sorted(classes):
-  classData.append('<h2><a href="' + classes[c][0] + '">' + c + '</a></h2>')
-  sessions = sorted(classes[c][1])
+  classData.append('<h2><a href="' + classes[c].url + '">' + c + '</a></h2>')
+  sessions = classes[c].sessions
   if len(sessions) == 0:
     continue
   classData.append('<table>')
   columnAppears = {}
+  displayColumns = [ "prefix", "day", "timeString", "period", "noClass" ]
   for s in sessions:
-    for i in range(0,5):
-      if s[i]:
+    for i in displayColumns:
+      if getattr(s, i):
         columnAppears[i] = True
-  for s in sorted(sessions, key = lambda c: (c[0], days.index(c[1]), c[2])):
-    columns = [s[i] for i in range(0,5) if i in columnAppears]
+  for s in sorted(sessions, key = lambda s: (s.prefix, days.index(s.day), s.timeString)):
+    columns = [getattr(s, i) for i in displayColumns if i in columnAppears]
     classed = classify(s)
-    if s[3] == 'rolling':
+    if s.period == 'rolling':
       classed = ''
-    classData.append('<tr ' + classed + '>' + "\n".join([ '<td>' + c + '</td>' for c in columns ]) + '</tr>')
+    classData.append('<tr ' + classed + '>' + "\n".join([ '<td>' + c + '</td>' for c in columns ]) + '{* "<td>watch</td>" *}</tr>')
   classData.append('</table>')
 
 with open(os.path.dirname(os.path.abspath(__file__)) + "/template.html") as f:
@@ -188,19 +197,19 @@ for c in classes:
   cur.execute("""INSERT INTO classes(name, created, updated) VALUES(%s, 'now', 'now') ON CONFLICT(name) DO UPDATE SET updated='now' RETURNING class_id""", (c,))
   class_id = cur.fetchone()[0]
   print("inserting ", c, " to ", class_id)
-  for s in classes[c][1]:
-    cur.execute("""INSERT INTO sessions(class_id, week_day, end_time, created, updated) VALUES (%s, %s, %s, 'now', 'now') ON CONFLICT (class_id, week_day, end_time) DO UPDATE SET updated='now' RETURNING session_id""", (class_id, s[1], s[5]))
-    session_id = cur.fetchone()[0]
-    cur.execute("""SELECT period_id FROM periods WHERE session_id=%s AND start_day=%s""", (session_id, s[6]))
+  for s in classes[c].sessions:
+    cur.execute("""INSERT INTO sessions(class_id, week_day, end_time, created, updated) VALUES (%s, %s, %s, 'now', 'now') ON CONFLICT (class_id, week_day, end_time) DO UPDATE SET updated='now' RETURNING session_id""", (class_id, s.day, s.endTime))
+    s.session_id = cur.fetchone()[0]
+    cur.execute("""SELECT period_id FROM periods WHERE session_id=%s AND start_day=%s""", (s.session_id, s.startDay))
     if cur.rowcount == 0:
-      print("new period: ", c, s[1], s[5], s[6])
+      print("new period: ", c, s.day, s.timeString, s.startDay)
       if MAILSERVER:
         emails['angell-test@kdf.sh'].append((c, s))
-        cur.execute("""SELECT email FROM emails JOIN emails_sessions USING (email_id) WHERE session_id = %s""", (session_id,))
+        cur.execute("""SELECT email FROM emails JOIN emails_sessions USING (email_id) WHERE session_id = %s""", (s.session_id,))
         for email in cur:
           emails[email[0]].append((c, s))
 
-    cur.execute("""INSERT INTO periods(session_id, start_day, created, updated) VALUES (%s, %s, 'now', 'now') ON CONFLICT (session_id, start_day) DO UPDATE SET updated='now'""", (session_id, s[6]))
+    cur.execute("""INSERT INTO periods(session_id, start_day, created, updated) VALUES (%s, %s, 'now', 'now') ON CONFLICT (session_id, start_day) DO UPDATE SET updated='now'""", (s.session_id, s.startDay))
 
 cur.close()
 
@@ -241,15 +250,15 @@ if MAILSERVER:
         print(updates)
         values = {}
         values['clas'] = updates[0][0]
-        values['time'] = updates[0][1][2]
-        values['date'] = updates[0][1][6]
-        values['url'] = classes[updates[0][0]][0]
+        values['time'] = updates[0][1].timeString
+        values['date'] = updates[0][1].startDay
+        values['url'] = classes[updates[0][0]].url
         values['me'] = 'http://angell.kdf.sh'
         msg = MIMEText(SINGLE_EMAIL_TEMPLATE.substitute(**values))
         msg['Subject'] = 'Updated Angell class time for ' + updates[0][0]
       else:
         print(updates)
-        msgs = map(lambda u: MULTI_CLASS_TEMPLATE.substitute(clas=u[0], time=u[1][2], date=u[1][6], url=classes[u[0]][0]), updates)
+        msgs = map(lambda u: MULTI_CLASS_TEMPLATE.substitute(clas=u[0], time=u[1].timeString, date=u[1].startDay, url=classes[u[0]].url), updates)
         values = {}
         values['classes'] = "\n".join(msgs)
         values['me'] = 'http://angell.kdf.sh'
