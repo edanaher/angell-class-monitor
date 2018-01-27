@@ -59,7 +59,14 @@ function verify_cookie(optional)
   local email, err = c:get "email"
   if err and optional then return nil end
   if err then return ngx.say("Cookie error: " .. err) end
-  -- TODO: verify token
+  local token, err = c:get "token"
+  if err and optional then return nil end
+  if err then return ngx.say("Cookie error: " .. err) end
+
+  local res, err = pg:query("SELECT COUNT(*) FROM tokens JOIN emails USING (email_id) WHERE email=" .. pg:escape_literal(email) .. " AND cookie=" .. pg:escape_literal(token) )
+  if not res then return ngx.say("SQL error: " .. err) end
+  if res[1].count == 0 and optional then return nil end
+  if res[1].count == 0 then ngx.say("Invalid session") end
   return email
 end
 
