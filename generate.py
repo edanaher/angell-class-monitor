@@ -158,64 +158,66 @@ for u in urls:
     session.desc = desc
     classes[name].sessions.append(session)
 
-classData = []
-for c in sorted(classes):
-  classData.append('<h2><a href="' + classes[c].url + '">' + c + '</a></h2>')
-  sessions = classes[c].sessions
-  if len(sessions) == 0:
-    continue
-  classData.append('<table>')
-  columnAppears = {}
-  displayColumns = [ "prefix", "day", "timeString", "period", "noClass" ]
-  for s in sessions:
-    for i in displayColumns:
-      if getattr(s, i):
-        columnAppears[i] = True
-  for s in sorted(sessions, key = lambda s: (s.prefix, days.index(s.day), s.timeString)):
-    columns = [getattr(s, i) for i in displayColumns if i in columnAppears]
-    classed = classify(s)
-    if s.period == 'rolling':
-      classed = ''
-    classData.append('<tr ' + classed + '>' + "\n".join([ '<td>' + c + '</td>' for c in columns ]) + '{* "<td>watch</td>" *}</tr>')
-  classData.append('</table>')
+def render_html(classes):
+  classData = []
+  for c in sorted(classes):
+    classData.append('<h2><a href="' + classes[c].url + '">' + c + '</a></h2>')
+    sessions = classes[c].sessions
+    if len(sessions) == 0:
+      continue
+    classData.append('<table>')
+    columnAppears = {}
+    displayColumns = [ "prefix", "day", "timeString", "period", "noClass" ]
+    for s in sessions:
+      for i in displayColumns:
+        if getattr(s, i):
+          columnAppears[i] = True
+    for s in sorted(sessions, key = lambda s: (s.prefix, days.index(s.day), s.timeString)):
+      columns = [getattr(s, i) for i in displayColumns if i in columnAppears]
+      classed = classify(s)
+      if s.period == 'rolling':
+        classed = ''
+      watchString = '{* "<td id=\\"session-' + str(s.session_id) + '\\">" .. toggle_watch_session(watches, ' + str(s.session_id) + ') .. "</td>" *}'
+      classData.append('<tr ' + classed + '>' + "\n".join([ '<td>' + c + '</td>' for c in columns]) + watchString + '</tr>')
+    classData.append('</table>')
 
-with open(os.path.dirname(os.path.abspath(__file__)) + "/template.html") as f:
-  templateContents = f.read()
-template = Template(templateContents)
-now = list(os.popen('TZ=America/New_York date'))[0].rstrip()
-output = template.substitute(now=now, classes = "\n".join(classData))
-with open(OUTFILE, "w") as outfile:
-  outfile.write(re.sub("\*{|}\*|{\*[^}]*\*}", "", output))
-with open(TEMPLATEFILE, "w") as outfile:
-  outfile.write(re.sub("\*{[^}]*}\*", "", output, flags=re.DOTALL))
+  with open(os.path.dirname(os.path.abspath(__file__)) + "/template.html") as f:
+    templateContents = f.read()
+  template = Template(templateContents)
+  now = list(os.popen('TZ=America/New_York date'))[0].rstrip()
+  output = template.substitute(now=now, classes = "\n".join(classData))
+  with open(OUTFILE, "w") as outfile:
+    outfile.write(re.sub("\*{|}\*|{\*[^}]*\*}", "", output))
+  with open(TEMPLATEFILE, "w") as outfile:
+    outfile.write(re.sub("\*{[^}]*}\*", "", output, flags=re.DOTALL))
 
-conn = psycopg2.connect(dbname = "angell", user = "angell", password = "@PASSWORD");
-cur = conn.cursor()
+def write_sql(classes):
+  conn = psycopg2.connect(dbname = "angell", user = "angell", password = "@PASSWORD");
+  cur = conn.cursor()
 
-emails = defaultdict(list)
-for c in classes:
-  cur.execute("""INSERT INTO classes(name, created, updated) VALUES(%s, 'now', 'now') ON CONFLICT(name) DO UPDATE SET updated='now' RETURNING class_id""", (c,))
-  class_id = cur.fetchone()[0]
-  print("inserting ", c, " to ", class_id)
-  for s in classes[c].sessions:
-    cur.execute("""INSERT INTO sessions(class_id, week_day, end_time, created, updated) VALUES (%s, %s, %s, 'now', 'now') ON CONFLICT (class_id, week_day, end_time) DO UPDATE SET updated='now' RETURNING session_id""", (class_id, s.day, s.endTime))
-    s.session_id = cur.fetchone()[0]
-    cur.execute("""SELECT period_id FROM periods WHERE session_id=%s AND start_day=%s""", (s.session_id, s.startDay))
-    if cur.rowcount == 0:
-      print("new period: ", c, s.day, s.timeString, s.startDay)
-      if MAILSERVER:
-        emails['angell-test@kdf.sh'].append((c, s))
-        cur.execute("""SELECT email FROM emails JOIN emails_sessions USING (email_id) WHERE session_id = %s""", (s.session_id,))
-        for email in cur:
-          emails[email[0]].append((c, s))
+  emails = defaultdict(list)
+  for c in classes:
+    cur.execute("""INSERT INTO classes(name, created, updated) VALUES(%s, 'now', 'now') ON CONFLICT(name) DO UPDATE SET updated='now' RETURNING class_id""", (c,))
+    class_id = cur.fetchone()[0]
+    print("inserting ", c, " to ", class_id)
+    for s in classes[c].sessions:
+      cur.execute("""INSERT INTO sessions(class_id, week_day, end_time, created, updated) VALUES (%s, %s, %s, 'now', 'now') ON CONFLICT (class_id, week_day, end_time) DO UPDATE SET updated='now' RETURNING session_id""", (class_id, s.day, s.endTime))
+      s.session_id = cur.fetchone()[0]
+      cur.execute("""SELECT period_id FROM periods WHERE session_id=%s AND start_day=%s""", (s.session_id, s.startDay))
+      if cur.rowcount == 0:
+        print("new period: ", c, s.day, s.timeString, s.startDay)
+        if MAILSERVER:
+          emails['angell-test@kdf.sh'].append((c, s))
+          cur.execute("""SELECT email FROM emails JOIN emails_sessions USING (email_id) WHERE session_id = %s""", (s.session_id,))
+          for email in cur:
+            emails[email[0]].append((c, s))
 
-    cur.execute("""INSERT INTO periods(session_id, start_day, created, updated) VALUES (%s, %s, 'now', 'now') ON CONFLICT (session_id, start_day) DO UPDATE SET updated='now'""", (s.session_id, s.startDay))
+      cur.execute("""INSERT INTO periods(session_id, start_day, created, updated) VALUES (%s, %s, 'now', 'now') ON CONFLICT (session_id, start_day) DO UPDATE SET updated='now'""", (s.session_id, s.startDay))
 
-cur.close()
+  cur.close()
+  conn.commit()
+  conn.close()
 
-conn.commit()
-
-conn.close()
 
 SINGLE_EMAIL_MESSAGE = """
 Your class "$clas" at $time has been updated; the current session starts on $date
@@ -242,30 +244,35 @@ Register at $url
 
 MULTI_CLASS_TEMPLATE = Template(MULTI_CLASS_MESSAGE)
 
-if MAILSERVER:
-  with SMTP(MAILSERVER) as smtp:
-    for email in emails:
-      updates = emails[email]
-      if len(updates) == 1:
-        print(updates)
-        values = {}
-        values['clas'] = updates[0][0]
-        values['time'] = updates[0][1].timeString
-        values['date'] = updates[0][1].startDay
-        values['url'] = classes[updates[0][0]].url
-        values['me'] = 'http://angell.kdf.sh'
-        msg = MIMEText(SINGLE_EMAIL_TEMPLATE.substitute(**values))
-        msg['Subject'] = 'Updated Angell class time for ' + updates[0][0]
-      else:
-        print(updates)
-        msgs = map(lambda u: MULTI_CLASS_TEMPLATE.substitute(clas=u[0], time=u[1].timeString, date=u[1].startDay, url=classes[u[0]].url), updates)
-        values = {}
-        values['classes'] = "\n".join(msgs)
-        values['me'] = 'http://angell.kdf.sh'
-        msg = MIMEText(MULTI_EMAIL_TEMPLATE.substitute(**values))
-        msg['Subject'] = 'Updated Angell class time for multiple classes'
-      msg['From'] = 'notifications-angell@kdf.sh'
-      msg['To'] = email
-      #smtp.set_debuglevel(1)
-      smtp.send_message(msg)
-    smtp.quit()
+def send_emails(classes):
+  if MAILSERVER:
+    with SMTP(MAILSERVER) as smtp:
+      for email in emails:
+        updates = emails[email]
+        if len(updates) == 1:
+          print(updates)
+          values = {}
+          values['clas'] = updates[0][0]
+          values['time'] = updates[0][1].timeString
+          values['date'] = updates[0][1].startDay
+          values['url'] = classes[updates[0][0]].url
+          values['me'] = 'http://angell.kdf.sh'
+          msg = MIMEText(SINGLE_EMAIL_TEMPLATE.substitute(**values))
+          msg['Subject'] = 'Updated Angell class time for ' + updates[0][0]
+        else:
+          print(updates)
+          msgs = map(lambda u: MULTI_CLASS_TEMPLATE.substitute(clas=u[0], time=u[1].timeString, date=u[1].startDay, url=classes[u[0]].url), updates)
+          values = {}
+          values['classes'] = "\n".join(msgs)
+          values['me'] = 'http://angell.kdf.sh'
+          msg = MIMEText(MULTI_EMAIL_TEMPLATE.substitute(**values))
+          msg['Subject'] = 'Updated Angell class time for multiple classes'
+        msg['From'] = 'notifications-angell@kdf.sh'
+        msg['To'] = email
+        #smtp.set_debuglevel(1)
+        smtp.send_message(msg)
+      smtp.quit()
+
+write_sql(classes)
+render_html(classes)
+send_emails(classes)

@@ -85,6 +85,25 @@
       req.open("GET", "/api/logout");
       req.send();
     }
+    function watched(session_id) {
+      return function() {
+        document.getElementById("session-" + session_id).innerHTML = this.response;
+      }
+    }
+    function watch_session(session_id) {
+      var req = new XMLHttpRequest();
+      req.addEventListener("load", watched(session_id));
+      req.open("GET", "/api/watch/" + session_id);
+      document.getElementById("session-" + session_id).innerHTML = "Watching...";
+      req.send();
+    }
+    function unwatch_session(session_id) {
+      var req = new XMLHttpRequest();
+      req.addEventListener("load", watched(session_id));
+      req.open("GET", "/api/unwatch/" + session_id);
+      document.getElementById("session-" + session_id).innerHTML = "Unwatching...";
+      req.send();
+    }
   </script>
   </head>
   <body>

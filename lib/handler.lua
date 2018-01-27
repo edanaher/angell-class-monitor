@@ -52,10 +52,12 @@ function verify_email(email, token)
   ngx.print("OK")
 end
 
-function verify_cookie()
+function verify_cookie(optional)
   local c = ck:new()
+  if not c and optional then return nil end
   if not c then return ngx.say("Cookie error: " .. err) end
   local email, err = c:get "email"
+  if err and optional then return nil end
   if err then return ngx.say("Cookie error: " .. err) end
   -- TODO: verify token
   return email
@@ -64,11 +66,10 @@ end
 function watch_session(session)
   local email = verify_cookie()
   if not email then return ngx.say("Invalid cookie; not signed in or expired") end
-  ngx.say("Valid token for " .. email)
 
   local res, err = pg:query("SELECT email_id FROM emails WHERE email=" .. pg:escape_literal(email))
   if not res then return ngx.say("SQL error: " .. err) end
-  if #res == 1 then ngx.say("No such email: " .. email) end
+  if #res ~= 1 then ngx.say("No such email: " .. email) end
   email_id = res[1].email_id
 
   local res, err = pg:query("SELECT COUNT(*) FROM sessions WHERE session_id=" .. pg:escape_literal(tonumber(session)))
@@ -77,7 +78,53 @@ function watch_session(session)
 
   local res, err = pg:query("INSERT INTO emails_sessions (email_id, session_id, created, updated) VALUES (" .. pg:escape_literal(email_id) .. ", " .. pg:escape_literal(tonumber(session)) .. ", 'now', 'now')")
   if not res then return ngx.say("SQL error: " .. err) end
-  ngx.say "OK"
+
+  ngx.say(toggle_watch_session({ [session] = true}, session))
+end
+
+function unwatch_session(session)
+  local email = verify_cookie()
+  if not email then return ngx.say("Invalid cookie; not signed in or expired") end
+
+  local res, err = pg:query("SELECT email_id FROM emails WHERE email=" .. pg:escape_literal(email))
+  if not res then return ngx.say("SQL error: " .. err) end
+  if #res ~= 1 then ngx.say("No such email: " .. email) end
+  email_id = res[1].email_id
+
+  local res, err = pg:query("SELECT COUNT(*) FROM sessions WHERE session_id=" .. pg:escape_literal(tonumber(session)))
+  if not res then return ngx.say("SQL error: " .. err) end
+  if res.count == 0 then return ngx.say("No such session: " .. session) end
+
+  local res, err = pg:query("DELETE FROM emails_sessions WHERE email_id = " .. pg:escape_literal(email_id) .. " AND session_id = " .. pg:escape_literal(tonumber(session)))
+  if not res then return ngx.say("SQL error: " .. err) end
+
+  ngx.say(toggle_watch_session({}, session))
+end
+
+function watches_for_email(email)
+  local res, err = pg:query("SELECT session_id FROM emails_sessions JOIN emails USING (email_id) WHERE email = " .. pg:escape_literal(email))
+  if res == nil then ngx.say("SQL ERROR: " .. tostring(err)) return {} end
+  watches = {}
+  for _, row in ipairs(res) do
+    watches[row.session_id] = true
+  end
+  return watches
+end
+
+function toggle_watch_session(watches, session_id)
+  local prefix = '<button onclick="'
+  local callback = ""
+  local infix = '">'
+  local text = ""
+  local suffix = '</button>'
+  if watches[session_id] then
+    callback = 'unwatch_session(' .. tostring(session_id) .. ')'
+    text = "stop watching"
+  else
+    callback = 'watch_session(' .. tostring(session_id) .. ')'
+    text = "watch"
+  end
+  return prefix .. callback .. infix .. text .. suffix
 end
 
 function dispatch() 
@@ -92,6 +139,10 @@ function dispatch()
   session = ngx.var.request_uri:match("/api/watch/(.+)")
   if session then
     return watch_session(session)
+  end
+  session = ngx.var.request_uri:match("/api/unwatch/(.+)")
+  if session then
+    return unwatch_session(session)
   end
   if(ngx.var.request_uri:match("/api/logout")) then
     local c = ck:new()
@@ -110,14 +161,13 @@ function dispatch()
     return ngx.say("OK")
   end
   if ngx.var.request_uri == "/" then
-    local c = ck:new()
-    if not c then return ngx.say("Cookie error: ", err) end
-    local email = c:get("email")
-    local token = c:get("token")
-    if email and token and email ~= "" then
-      -- TODO: Check token
+    local email = verify_cookie(true)
+    if email and email ~= "" then
       ngx.header.content_type = 'text/html';
-      return ngx.say(template.render("index.html", { userinfo = "Logged in as " .. email .. "&nbsp;&nbsp;<button onclick=\"logout()\">logout</button><hr />" }))
+      return ngx.say(template.render("index.html", {
+        userinfo = "Logged in as " .. email .. "&nbsp;&nbsp;<button onclick=\"logout()\">logout</button><hr />";
+        watches = watches_for_email(email);
+      }))
     end
   end
   return ngx.exec("/_static" .. ngx.var.request_uri)
