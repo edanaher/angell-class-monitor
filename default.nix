@@ -20,40 +20,39 @@ let lua-resty-package = { name, version, github-owner, sha256 }:
          '';
        };
 
-   lua-resty-random = lua-resty-package {
-     name = "random";
-     version = "17b604f7f7dd217557ca548fc1a9a0d373386480";
-     github-owner = "bungle";
-     sha256 = "095g88ka06q33lbypsavb0kmqv31yxidwl6w4qy6ram50w50zph7";
-   };
-
-   lua-resty-mail = lua-resty-package {
-     name = "mail";
-     version = "74abf68f763b8eb67dd521b7dd894427684a942f";
-     github-owner = "GUI";
-     sha256 = "078km18fldsmlw6bamw39fyscdp34afwg6yaa55p9mrp6nj2ikga";
-   };
-
-   lua-resty-string = lua-resty-package {
-     name = "string";
-     version = "a55eb9e3e0f08e1797cd5b31ccea9d9b05e5890b";
-     github-owner = "openresty";
-     sha256 = "1yl6s6hv3f9rwgvb8kk8pzwnvjqzl51gvi8z28qqxkhif24hykgz";
-   };
-
-   lua-resty-cookie = lua-resty-package {
-     name  = "cookie";
-     version = "v0.1.0";
-     github-owner = "cloudflare";
-     sha256 = "03ch2gwsvvwhz3hs0m2fvrhc5899irlmakdafxvamchb8wngxkpf";
-   };
-
-   lua-resty-template = lua-resty-package {
-     name  = "template";
-     version = "v1.9";
-     github-owner = "bungle";
-     sha256 = "0ga1kcpn34w0cxd35spa5cdkr4jsvqs6f4sdjcis19vczdasx16s";
-   };
+   lua-resty-packages = map lua-resty-package [
+     {
+       name  = "cookie";
+       version = "v0.1.0";
+       github-owner = "cloudflare";
+       sha256 = "03ch2gwsvvwhz3hs0m2fvrhc5899irlmakdafxvamchb8wngxkpf";
+     }
+     {
+       name = "mail";
+       version = "74abf68f763b8eb67dd521b7dd894427684a942f";
+       github-owner = "GUI";
+       sha256 = "078km18fldsmlw6bamw39fyscdp34afwg6yaa55p9mrp6nj2ikga";
+     }
+     {
+       name = "random";
+       version = "17b604f7f7dd217557ca548fc1a9a0d373386480";
+       github-owner = "bungle";
+       sha256 = "095g88ka06q33lbypsavb0kmqv31yxidwl6w4qy6ram50w50zph7";
+     }
+     {
+       name = "string";
+       version = "a55eb9e3e0f08e1797cd5b31ccea9d9b05e5890b";
+       github-owner = "openresty";
+       sha256 = "1yl6s6hv3f9rwgvb8kk8pzwnvjqzl51gvi8z28qqxkhif24hykgz";
+     }
+     {
+       name  = "template";
+       version = "v1.9";
+       github-owner = "bungle";
+       sha256 = "0ga1kcpn34w0cxd35spa5cdkr4jsvqs6f4sdjcis19vczdasx16s";
+     }
+   ];
+   lua-resty-path = pkgs.lib.concatMapStringsSep ";" (p : "${p}/lib/?.lua") lua-resty-packages;
 
    alt-getopt = pkgs.luajitPackages.buildLuaPackage rec {
      name = "alt-getopt-${version}";
@@ -174,6 +173,6 @@ in rec {
     };
   };
 
-  lua-path = "${pgmoon}/lib/?.lua;${pgmoon}/lib/?/init.lua;${lua-resty-random}/lib/?.lua;${lua-resty-cookie}/lib/?.lua;${lua-resty-template}/lib/?.lua;${lua-resty-mail}/lib/?.lua;${lua-resty-string}/lib/?.lua";
+  lua-path = "${pgmoon}/lib/?.lua;${pgmoon}/lib/?/init.lua;${lua-resty-path}";
 
 }
