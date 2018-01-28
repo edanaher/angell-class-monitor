@@ -27,6 +27,20 @@ let lua-resty-package = { name, version, github-owner, sha256 }:
      sha256 = "095g88ka06q33lbypsavb0kmqv31yxidwl6w4qy6ram50w50zph7";
    };
 
+   lua-resty-mail = lua-resty-package {
+     name = "mail";
+     version = "74abf68f763b8eb67dd521b7dd894427684a942f";
+     github-owner = "GUI";
+     sha256 = "078km18fldsmlw6bamw39fyscdp34afwg6yaa55p9mrp6nj2ikga";
+   };
+
+   lua-resty-string = lua-resty-package {
+     name = "string";
+     version = "a55eb9e3e0f08e1797cd5b31ccea9d9b05e5890b";
+     github-owner = "openresty";
+     sha256 = "1yl6s6hv3f9rwgvb8kk8pzwnvjqzl51gvi8z28qqxkhif24hykgz";
+   };
+
    lua-resty-cookie = lua-resty-package {
      name  = "cookie";
      version = "v0.1.0";
@@ -160,6 +174,6 @@ in rec {
     };
   };
 
-  lua-path = "${pgmoon}/lib/?.lua;${pgmoon}/lib/?/init.lua;${lua-resty-random}/lib/?.lua;${lua-resty-cookie}/lib/?.lua;${lua-resty-template}/lib/?.lua";
+  lua-path = "${pgmoon}/lib/?.lua;${pgmoon}/lib/?/init.lua;${lua-resty-random}/lib/?.lua;${lua-resty-cookie}/lib/?.lua;${lua-resty-template}/lib/?.lua;${lua-resty-mail}/lib/?.lua;${lua-resty-string}/lib/?.lua";
 
 }

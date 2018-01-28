@@ -2,6 +2,7 @@ local pgmoon = require("pgmoon")
 local random = require("resty.random")
 local ck = require("resty.cookie")
 local template = require("resty.template")
+local mail = require("resty.mail")
 
 local pg = pgmoon.new {
   host = "127.0.0.1";
@@ -19,6 +20,22 @@ function register_email(email)
   local res, err = pg:query("INSERT INTO tokens (email_id, value, status, created, updated) VALUES (" .. tostring(id) .. ", ".. pg:escape_literal(random.token(12)) .. ", 'new', 'now', 'now') RETURNING value")
   if res == nil then ngx.say("SQL ERROR: " .. tostring(err)) end
   ngx.log(ngx.ERR, "token for " .. email .. " is " .. tostring(res[1].value))
+
+  if ngx.var.mail_host then
+    local mailer, err = mail.new {
+      host = ngx.var.mail_host,
+      port = ngx.var.mail_port or 25
+    }
+    if err then return ngx.say("Error setting up e-mail: " .. err) end
+    local ok, err = mailer:send {
+      from = "registration-angell@kdf.sh";
+      to = { email };
+      subject = "Registration for angell.kdf.sh";
+      text = "Testing e-mail";
+    }
+    if not ok then return ngx.say("Error sending e-mail: " .. err) end
+  end
+
   ngx.print("OK");
 end
 

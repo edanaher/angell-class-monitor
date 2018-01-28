@@ -3,6 +3,7 @@
 let angell-packages = import ./default.nix { inherit pkgs angell-password; template-path = "${web-path}/templates"; };
     angell-password = "secure-angell";
     angell-class-monitor = angell-packages.angell-class-monitor;
+    mail-host = "10.233.1.1";
     web-path = "/var/run/angell-classes";
     template-path = "${web-path}/templates";
     angell-wrapper = pkgs.writeScriptBin "angell-class-wrapper" ''
@@ -67,6 +68,7 @@ in
           content_by_lua_file ${angell-class-monitor}/lib/handler.lua;
           set $angell_password ${angell-password};
           set $template_root ${template-path};
+          set $mail_host ${mail-host};
         '';
       };
     };
