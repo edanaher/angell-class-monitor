@@ -12,6 +12,14 @@ local pg = pgmoon.new {
   password = ngx.var.angell_password or "angell";
 }
 
+EMAIL_TEMPLATE =
+[[To sign into angell.kdf.sh to manage your subscriptions, either enter the
+token below or visit the link.  This will sign you in indefinetely on that
+device.
+
+{* verify_link *}
+Token: {{ token }}]]
+
 function register_email(email)
   local res, err = pg:query("INSERT INTO emails (email, status, created, updated) VALUES (" .. pg:escape_literal(email) .. ", 'new', 'now', 'now') ON CONFLICT (email) DO UPDATE SET updated='now' RETURNING email_id")
   if res == nil then return ngx.say("SQL ERROR: " .. tostring(err)) end
@@ -19,7 +27,8 @@ function register_email(email)
 
   local res, err = pg:query("INSERT INTO tokens (email_id, value, status, created, updated) VALUES (" .. tostring(id) .. ", ".. pg:escape_literal(random.token(12)) .. ", 'new', 'now', 'now') RETURNING value")
   if res == nil then ngx.say("SQL ERROR: " .. tostring(err)) end
-  ngx.log(ngx.ERR, "token for " .. email .. " is " .. tostring(res[1].value))
+  local token = res[1].value
+  ngx.log(ngx.ERR, "token for " .. email .. " is " .. tostring(token))
 
   if ngx.var.mail_host then
     local mailer, err = mail.new {
@@ -27,11 +36,14 @@ function register_email(email)
       port = ngx.var.mail_port or 25
     }
     if err then return ngx.say("Error setting up e-mail: " .. err) end
+    local t = template.new(EMAIL_TEMPLATE)
+    t.token = token
+    t.verify_link = "http://" .. ngx.var.host .. (ngx.var.server_port == "80" and "" or ":" .. ngx.var.server_port) .. "/api/email/" .. email .. "/verify/" .. token
     local ok, err = mailer:send {
       from = "registration-angell@kdf.sh";
       to = { email };
       subject = "Registration for angell.kdf.sh";
-      text = "Testing e-mail";
+      text = tostring(t)
     }
     if not ok then return ngx.say("Error sending e-mail: " .. err) end
   end
