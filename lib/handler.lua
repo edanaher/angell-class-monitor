@@ -200,10 +200,10 @@ function dispatch()
     local email = verify_cookie(true)
     if email and email ~= "" then
       ngx.header.content_type = 'text/html';
-      return ngx.say(template.render("index.html", {
+      return template.render("index.html", {
         userinfo = "Logged in as " .. email .. "&nbsp;&nbsp;<button onclick=\"logout()\">logout</button><hr />";
         watches = watches_for_email(email);
-      }))
+      })
     end
   end
   return ngx.exec("/_static" .. ngx.var.request_uri)
