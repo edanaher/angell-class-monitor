@@ -41,6 +41,15 @@
         margin-bottom: 0px;
         margin-top: 4px;
       }
+      .content {
+        display: none;
+      }
+      .content.active {
+        display: block;
+      }
+      #navbar span {
+        background-color: #EEEEEE;
+      }
     </style>
   <script type="text/javascript">
     function registered() {
@@ -104,20 +113,52 @@
       document.getElementById("session-" + session_id).innerHTML = "Unwatching...";
       req.send();
     }
+    function select_tab() {
+      var oldActive = document.querySelector(".content.active");
+      console.log("switching to content-" + this.textContent);
+      var newActive = document.getElementById("content-" + this.textContent);
+      oldActive.classList.remove("active");
+      newActive.classList.add("active");
+    }
+    function init_tabs() {
+      var tabs = document.querySelectorAll("#navbar span");
+      for(var t = 0; t < tabs.length; t++) {
+        tabs[t].addEventListener("click", select_tab);
+      }
+    }
+    window.onload = init_tabs;
   </script>
   </head>
   <body>
+    <div id="navbar">
+      <span>About</span>
+      <span>Classes</span>
+      *{ <span>Login</span> }*
+      {* "<span>Account</span>" *}
+    </div>
     *{
+    <div id="content-Login" class="content">
     <p> email: <input id="email" />  <button onclick="register()">Email me a token</button><span id="email-feedback" /></p>
     <p> token: <input id="token" />  <button onclick="verify()">Sign in with token</button><span id="token-feedback" /></p>
-    <hr>
+    </div>
     }*
     {* userinfo *}
+    <div id="content-About" class="content">
     <p>This list is unofficial and automatically generated, and as such may be incorrect or out of date.  Links should take you to registration, but check everything before signing up.  No warranty, use at your own risk, <a href="http://catb.org/jargon/html/N/nasal-demons.html">nasal demons</a>, etc.</p>
     <p>Class listings taken from the MSPCA Angell's <a href="https://www.mspca.org/animal_care/boston-dog-training/">Boston Dog and Cat Training Page</a>, schedules taken from individual class pages linked.</p>
     <p>Send comments or complaints to <a href="mailto:mspca-classes@kdf.sh">mspca-classes@kdf.sh</a></p>
     <p> Key: Green background is future sessions, cyan is recently started, orange is nearly finished, red is completed and greyed out text indicates sessions currently unavailble.<p>
     <p>Last updated $now</p>
+    </div>
+    <div id="content-Classes" class="content active">
     $classes
+    </div>
+    {* [[
+    <div id="content-Account" class="content">
+      <p>You are currently signed in as ]] .. email  .. [[.  This allows you to modify your watched sessions.  Any time a session you are watching is updated with a new time, you will get an e-mail letting you know; this is intended to help you sign up for recurring classes.</p>
+      <p>You will stay signed in on this device indefinitely; since this is a low-impact site, rather than making you remember a password, you'll just stay signed in.  If this turns out to be a problem, <a href="mailto:feedback@angell.kdf.sh">let me know</a>.  If you want to sign in from another device, you need to request a new token.</p>
+      <p>You'll probably eventually be able to see how many devices you are logged in on and log them out, like a real secure site.</p>
+    </div>
+    ]] *}
   </body>
 </html>

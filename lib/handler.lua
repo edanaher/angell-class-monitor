@@ -211,6 +211,7 @@ function dispatch()
       return template.render("index.html", {
         userinfo = "Logged in as " .. email .. "&nbsp;&nbsp;<button onclick=\"logout()\">logout</button><hr />";
         watches = watches_for_email(email);
+        email = email;
       })
     end
   end
