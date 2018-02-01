@@ -47,8 +47,60 @@
       .content.active {
         display: block;
       }
-      #navbar span {
+      #navbar div {
+        display: inline-block;
+        position: relative;
+        margin-left: 8px;
+        margin-right: 8px;
+        margin-bottom: 8px;
+      }
+      #navbar div span {
         background-color: #EEEEEE;
+        padding-top: 4px;
+        padding-bottom: 4px;
+        width: 4em;
+        z-index: 2;
+      }
+      #navbar div span:before {
+        width: 2em;
+        height: 100%;
+        padding-top: 4px;
+        padding-bottom: 4px;
+        background-color: #EEEEEE;
+        content: "";
+        position: absolute;
+        left: -10px;
+        top: -4px;
+        z-index: -1;
+        transform: skew(-30deg);
+        border-top-left-radius: 6px;
+      }
+      #navbar div span:after {
+        width: 2em;
+        height: 100%;
+        padding-top: 4px;
+        padding-bottom: 4px;
+        background-color: #EEEEEE;
+        content: "";
+        position: absolute;
+        right: -10px;
+        top: -4px;
+        z-index: -1;
+        transform: skew(30deg);
+        border-top-right-radius: 6px;
+        border-left: 1px
+      }
+      #navbar div.active span {
+        background-color: white;
+        //z-index: 2;
+      }
+      #navbar div.active span:before {
+        background-color: white;
+        //z-index: 1;
+      }
+      #navbar div.active span:after {
+        background-color: white;
+        //z-index: 1;
       }
     </style>
   <script type="text/javascript">
@@ -115,13 +167,16 @@
     }
     function select_tab() {
       var oldActive = document.querySelector(".content.active");
-      console.log("switching to content-" + this.textContent);
+      var oldActiveTab = document.querySelector("#navbar div.active");
       var newActive = document.getElementById("content-" + this.textContent);
+      var newActiveTab = this;
       oldActive.classList.remove("active");
       newActive.classList.add("active");
+      oldActiveTab.classList.remove("active");
+      newActiveTab.classList.add("active");
     }
     function init_tabs() {
-      var tabs = document.querySelectorAll("#navbar span");
+      var tabs = document.querySelectorAll("#navbar div");
       for(var t = 0; t < tabs.length; t++) {
         tabs[t].addEventListener("click", select_tab);
       }
@@ -131,10 +186,10 @@
   </head>
   <body>
     <div id="navbar">
-      <span>About</span>
-      <span>Classes</span>
-      *{ <span>Login</span> }*
-      {* "<span>Account</span>" *}
+      <div><span>About</span></div>
+      <div class="active"><span>Classes</span></div>
+      *{ <div><span>Login</span></div> }*
+      {* "<div><span>Account</span></div>" *}
     </div>
     *{
     <div id="content-Login" class="content">
@@ -142,7 +197,6 @@
     <p> token: <input id="token" />  <button onclick="verify()">Sign in with token</button><span id="token-feedback" /></p>
     </div>
     }*
-    {* userinfo *}
     <div id="content-About" class="content">
     <p>This list is unofficial and automatically generated, and as such may be incorrect or out of date.  Links should take you to registration, but check everything before signing up.  No warranty, use at your own risk, <a href="http://catb.org/jargon/html/N/nasal-demons.html">nasal demons</a>, etc.</p>
     <p>Class listings taken from the MSPCA Angell's <a href="https://www.mspca.org/animal_care/boston-dog-training/">Boston Dog and Cat Training Page</a>, schedules taken from individual class pages linked.</p>
@@ -155,7 +209,8 @@
     </div>
     {* [[
     <div id="content-Account" class="content">
-      <p>You are currently signed in as ]] .. email  .. [[.  This allows you to modify your watched sessions.  Any time a session you are watching is updated with a new time, you will get an e-mail letting you know; this is intended to help you sign up for recurring classes.</p>
+      <p>You are currently signed in as ]] .. email  .. [[.  <button onclick="logout()">logout</button></p>
+      <p>This allows you to modify your watched sessions.  Any time a session you are watching is updated with a new time, you will get an e-mail letting you know; this is intended to help you sign up for recurring classes.</p>
       <p>You will stay signed in on this device indefinitely; since this is a low-impact site, rather than making you remember a password, you'll just stay signed in.  If this turns out to be a problem, <a href="mailto:feedback@angell.kdf.sh">let me know</a>.  If you want to sign in from another device, you need to request a new token.</p>
       <p>You'll probably eventually be able to see how many devices you are logged in on and log them out, like a real secure site.</p>
     </div>
