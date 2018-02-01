@@ -38,7 +38,7 @@ function register_email(email)
     if err then return ngx.say("Error setting up e-mail: " .. err) end
     local t = template.new(EMAIL_TEMPLATE)
     t.token = token
-    t.verify_link = "http://" .. ngx.var.host .. (ngx.var.server_port == "80" and "" or ":" .. ngx.var.server_port) .. "/api/email/" .. email .. "/verify/" .. token
+    t.verify_link = "http://" .. ngx.var.host .. (ngx.var.server_port == "80" and "" or ":" .. ngx.var.server_port) .. "/api/email/" .. email .. "/verifyemail/" .. token
     local ok, err = mailer:send {
       from = "registration-angell@kdf.sh";
       to = { email };
@@ -51,7 +51,7 @@ function register_email(email)
   ngx.print("OK");
 end
 
-function verify_email(email, token)
+function verify_email(email, token, redirect)
   local res, err = pg:query("SELECT email_id FROM emails WHERE email = " .. pg:escape_literal(email))
   if res == nil then return ngx.print("SQL ERROR: " .. tostring(err)) end
   if #res == 0 then return ngx.print("No such e-mail registered: " .. email) end
@@ -78,7 +78,11 @@ function verify_email(email, token)
     httponly = true
   }
   if not ok then return ngx.print("Cookie error: ", err) end
-  ngx.print("OK")
+  if redirect then
+    ngx.redirect("/")
+  else
+    ngx.print("OK")
+  end
 end
 
 function verify_cookie(optional)
@@ -171,6 +175,10 @@ function dispatch()
   email, token = ngx.var.request_uri:match("/api/email/(.+)/verify/(.+)")
   if email and token then
     return verify_email(email, token)
+  end
+  email, token = ngx.var.request_uri:match("/api/email/(.+)/verifyemail/(.+)")
+  if email and token then
+    return verify_email(email, token, true)
   end
   session = ngx.var.request_uri:match("/api/watch/(.+)")
   if session then
