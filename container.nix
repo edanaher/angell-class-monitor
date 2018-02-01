@@ -68,7 +68,7 @@ in
           content_by_lua_file ${angell-class-monitor}/lib/handler.lua;
           set $angell_password ${angell-password};
           set $template_root ${template-path};
-          set $mail_host ${mail-host};
+          #set $mail_host ${mail-host};
         '';
       };
     };
