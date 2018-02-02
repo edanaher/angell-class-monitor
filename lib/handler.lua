@@ -25,7 +25,7 @@ function register_email(email)
   if res == nil then return ngx.say("SQL ERROR: " .. tostring(err)) end
   local id = res[1].email_id
 
-  local res, err = pg:query("INSERT INTO tokens (email_id, value, status, created, updated) VALUES (" .. tostring(id) .. ", ".. pg:escape_literal(random.token(12)) .. ", 'new', 'now', 'now') RETURNING value")
+  local res, err = pg:query("INSERT INTO tokens (email_id, value, status, created, updated) VALUES (" .. tostring(id) .. ", ".. pg:escape_literal(random.token(6)) .. ", 'new', 'now', 'now') RETURNING value")
   if res == nil then ngx.say("SQL ERROR: " .. tostring(err)) end
   local token = res[1].value
   ngx.log(ngx.ERR, "token for " .. email .. " is " .. tostring(token))
