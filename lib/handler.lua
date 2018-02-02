@@ -209,7 +209,6 @@ function dispatch()
     if email and email ~= "" then
       ngx.header.content_type = 'text/html';
       return template.render("index.html", {
-        userinfo = "Logged in as " .. email .. "&nbsp;&nbsp;<button onclick=\"logout()\">logout</button><hr />";
         watches = watches_for_email(email);
         email = email;
       })
