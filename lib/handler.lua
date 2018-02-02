@@ -12,6 +12,8 @@ local pg = pgmoon.new {
   password = ngx.var.angell_password or "angell";
 }
 
+template.caching(false)
+
 EMAIL_TEMPLATE =
 [[To sign into angell.kdf.sh to manage your subscriptions, either enter the
 token below or visit the link.  This will sign you in indefinetely on that
