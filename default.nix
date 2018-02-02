@@ -183,8 +183,8 @@ in rec {
        else ''now=`date -Iseconds`'' }
     cd ${monitor-script}/bin
     ${ if debug-mode
-       then ''./generate.py -o ${web-path}/new-$now.html -t ${template-path}/new-$now.html -r ${web-path}/raw/$now -d''
-       else ''./generate.py -o ${web-path}/new-$now.html -t ${template-path}/new-$now.html -r ${web-path}/raw/$now'' }
+       then ''./generate.py -o ${web-path}/index-$now.html -t ${template-path}/index-$now.html -r ${web-path}/raw/$now -d''
+       else ''./generate.py -o ${web-path}/index-$now.html -t ${template-path}/index-$now.html -r ${web-path}/raw/$now'' }
     ln -sf ${web-path}/new-$now.html ${web-path}/index.html
     ln -sf ${template-path}/new-$now.html ${template-path}/index.html
     '';
