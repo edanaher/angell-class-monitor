@@ -70,12 +70,12 @@ function verify_email(email, token, redirect)
   --if not cookie then return ngx.log(ngx.ERR, err) end
   local ok, err = c:set {
     key = "token", value = cookie, path = "/",
-    httponly = true
+    httponly = true, max_age = 2^31 - 1
   }
   if not ok then return ngx.print("Cookie error: ", err) end
   local ok, err = c:set {
     key = "email", value = email, path = "/",
-    httponly = true
+    httponly = true, max_age = 2^31 - 1
   }
   if not ok then return ngx.print("Cookie error: ", err) end
   if redirect then
