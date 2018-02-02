@@ -27,7 +27,7 @@ in
   services.nginx.enable = true;
   services.nginx.package = (pkgs.nginx.overrideAttrs (oldAttrs: { configureFlags = oldAttrs.configureFlags ++ [/*"--with-ld-opt=${pgmoon}/doesnotexit"*/]; } )).override { modules = with pkgs.nginxModules; [ lua ]; };
   services.nginx.appendHttpConfig = ''
-    lua_package_path ";;${angell-packages.lua-path};";
+    lua_package_path ";;${angell-packages.lua-path}";
   '';
   services.nginx.virtualHosts = {
     "localhost" = angell-packages.nginx-locations;

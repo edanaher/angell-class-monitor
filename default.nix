@@ -190,7 +190,7 @@ in rec {
     '';
 
   service = {
-    description = "update-angell script";
+    description = "Scrape updates for Angell classes";
     after = [ "network.target" "postgresql.service" ];
     wantedBy = [ "multi-user.target" ];
     environment = { TZ = "America/Los_Angeles"; };
@@ -204,7 +204,7 @@ in rec {
     };
 
     preStart = ''
-      ${monitor-script}/bin/setup.sh ${web-path}
+      ${monitor-script}/bin/setup.sh ${web-path} ${template-path}
     '';
   };
 
