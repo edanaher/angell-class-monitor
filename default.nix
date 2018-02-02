@@ -1,4 +1,4 @@
-{ pkgs ? import <nixpkgs> {}, angell-password ? "angell", template-path }:
+{ pkgs ? import <nixpkgs> {}, angell-password ? "angell" }:
 
 let lua-resty-package = { name, version, github-owner, sha256 }:
       let pkg-name = name; in

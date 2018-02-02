@@ -1,6 +1,6 @@
 { pkgs ? import <nixpkgs> {}, config, options, lib, modulesPath }:
 
-let angell-packages = import ./default.nix { inherit pkgs angell-password; template-path = "${web-path}/templates"; };
+let angell-packages = import ./default.nix { inherit pkgs angell-password; };
     angell-password = "secure-angell";
     angell-class-monitor = angell-packages.angell-class-monitor;
     mail-host = "10.233.1.1";
