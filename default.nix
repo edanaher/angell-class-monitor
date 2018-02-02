@@ -1,4 +1,4 @@
-{ pkgs ? import <nixpkgs> {}, angell-password ? "angell" }:
+{ pkgs ? import <nixpkgs> {}, angell-password ? "angell", web-path, template-path, debug-mode ? false, mail-host ? null }:
 
 let lua-resty-package = { name, version, github-owner, sha256 }:
       let pkg-name = name; in
@@ -137,7 +137,7 @@ let lua-resty-package = { name, version, github-owner, sha256 }:
      '';
    };
 in rec {
-  angell-class-monitor = pkgs.python3Packages.buildPythonApplication {
+  monitor-script = pkgs.python3Packages.buildPythonApplication {
     name = "angell-class-monitor";
 
     src = ./.;
@@ -173,6 +173,55 @@ in rec {
     };
   };
 
+  wrapper = pkgs.writeScriptBin "angell-class-wrapper" ''
+    #!/bin/sh
+    mkdir -p ${web-path}/raw
+    mkdir -p ${web-path}/templates
+
+    ${ if debug-mode
+       then ''now=2018-01-12T18:53:43-08:00''
+       else ''now=`date -Iseconds`'' }
+    cd ${monitor-script}/bin
+    ${ if debug-mode
+       then ''./generate.py -o ${web-path}/new-$now.html -t ${template-path}/new-$now.html -r ${web-path}/raw/$now -d''
+       else ''./generate.py -o ${web-path}/new-$now.html -t ${template-path}/new-$now.html -r ${web-path}/raw/$now'' }
+    ln -sf ${web-path}/new-$now.html ${web-path}/index.html
+    ln -sf ${template-path}/new-$now.html ${template-path}/index.html
+    '';
+
+  service = {
+    description = "update-angell script";
+    after = [ "network.target" "postgresql.service" ];
+    wantedBy = [ "multi-user.target" ];
+    environment = { TZ = "America/Los_Angeles"; };
+    serviceConfig =  {
+      ExecStart = "${wrapper}/bin/angell-class-wrapper";
+      Restart = "on-failure";
+      RestartSec = "4h";
+      StartLimitInterval = "1min";
+      PermissionsStartOnly = "true"; # Run postgres setup as root
+      User = "angell";
+    };
+
+    preStart = ''
+      ${monitor-script}/bin/setup.sh ${web-path}
+    '';
+  };
+
   lua-path = "${pgmoon}/lib/?.lua;${pgmoon}/lib/?/init.lua;${lua-resty-path}";
+  nginx-locations = {
+    locations."/_static".alias = web-path;
+    locations."/" = {
+      extraConfig = ''
+        default_type text/plain;
+        content_by_lua_file ${monitor-script}/lib/handler.lua;
+        set $angell_password ${angell-password};
+        set $template_root ${template-path};
+        ${ if mail-host != null
+           then ''set $mail_host ${mail-host};''
+           else "" }
+      '';
+    };
+  };
 
 }
