@@ -207,7 +207,7 @@ def write_sql(classes):
       if cur.rowcount == 0:
         print("new period: ", c, s.day, s.timeString, s.startDay)
         if MAILSERVER:
-          emails['angell-test@kdf.sh'].append((c, s))
+          emails['test@angell.kdf.sh'].append((c, s))
           cur.execute("""SELECT email FROM emails JOIN emails_sessions USING (email_id) WHERE session_id = %s""", (s.session_id,))
           for email in cur:
             emails[email[0]].append((c, s))
@@ -267,7 +267,7 @@ def send_emails(classes):
           values['me'] = 'http://angell.kdf.sh'
           msg = MIMEText(MULTI_EMAIL_TEMPLATE.substitute(**values))
           msg['Subject'] = 'Updated Angell class time for multiple classes'
-        msg['From'] = 'notifications-angell@kdf.sh'
+        msg['From'] = 'notifications@angell.kdf.sh'
         msg['To'] = email
         #smtp.set_debuglevel(1)
         smtp.send_message(msg)

@@ -40,7 +40,7 @@ function register_email(email)
     t.token = token
     t.verify_link = "http://" .. ngx.var.host .. (ngx.var.server_port == "80" and "" or ":" .. ngx.var.server_port) .. "/api/email/" .. email .. "/verifyemail/" .. token
     local ok, err = mailer:send {
-      from = "registration-angell@kdf.sh";
+      from = "registration@angell.kdf.sh";
       to = { email };
       subject = "Registration for angell.kdf.sh";
       text = tostring(t)
