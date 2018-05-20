@@ -141,7 +141,7 @@ for u in urls:
     session = Session()
     desc = c.group(1)
     session.day = extractMatch(re.search("|".join(days), desc))
-    dateRegex = "[A-Z][a-z]+\s+[0-9][0-9]?[a-z]*"
+    dateRegex = "[A-Z][a-z]+\s*[0-9][0-9]?[a-z]*"
     session.period = extractMatch(re.search(dateRegex + "\s*-\s*" + dateRegex + "|[Nn]ot [Cc]urrently [Aa]vailable|TBD|See you [^)]*|rolling|[Cc]urrently [Uu]navailable", desc))
     session.startDay = extractMatch(re.search("^" + dateRegex, session.period))
     session.endDay = extractMatch(re.search(dateRegex + "$", session.period))
