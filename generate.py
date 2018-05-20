@@ -177,7 +177,7 @@ def render_html(classes):
       classed = classify(s)
       if s.period == 'rolling':
         classed = ''
-      watchString = '{* "<td id=\\"session-' + str(s.session_id) + '\\">" .. toggle_watch_session(watches, ' + str(s.session_id) + ') .. "</td>" *}'
+      watchString = '{* "<td id=\\"session-' + str(s.session_id) + '\\" class=\\"watch-cell\\">" .. toggle_watch_session(watches, ' + str(s.session_id) + ') .. "</td>" *}'
       classData.append('<tr ' + classed + '>' + "\n".join([ '<td>' + c + '</td>' for c in columns]) + watchString + '</tr>')
     classData.append('</table>')
 

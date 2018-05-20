@@ -3,38 +3,45 @@
     <title>Unofficial list of MPSCA Angell Training Classes</title>
     <style type="text/css">
       table {
-        border-spacing: 0px 2px;
-        border: 1px solid #DDDDDD;
+        border-spacing: 0;
       }
-      td {
+      td:not(.watch-cell) {
         padding-right: 1em;
-        margin-bottom: 2px;
+        padding-bottom: 4px;
+      }
+      tr:first-child td:not(.watch-cell) { border-top: 1px solid #DDDDDD; }
+      tr:last-child td:not(.watch-cell) { border-bottom: 1px solid #DDDDDD; }
+      td:first-child { border-left: 1px solid #DDDDDD; }
+      td:last-child:not(.watch-cell) { border-right: 1px solid #DDDDDD; }
+      .watch-cell {
+        border-left: 1px solid #DDDDDD;
+        padding-left: 8px;
       }
       //#tr:nth-child(even) { background: #EEEEEE; }
-      tr.past {
+      tr.past td:not(.watch-cell) {
         background: #FFEEEE;
         color: #660000;
       }
       //tr.past:nth-child(even) { background: #F3DDDD; }
-      tr.almost-done {
+      tr.almost-done td:not(.watch-cell) {
         background: #FFEEDD;
         color: #663300;
       }
       //tr.almost-done:nth-child(even) { background: #F3E3CC; }
-      tr.recent {
+      tr.recent td:not(.watch-cell) {
         background: #DDFFFF;
         color: #004444;
       }
       //tr.recent:nth-child(even) { background: #D3F3F3; }
-      tr.future {
+      tr.future td:not(.watch-cell) {
         background: #EEFFEE;
         color: #006600;
       }
       //tr.future:nth-child(even) { background: #DDF3DD; }
-      tr.unscheduled {
+      tr.unscheduled td:not(.watch-cell) {
         color: #999999;
       }
-      tr.error {
+      tr.error td:not(.watch-cell) {
         color: #FF00FF;
       }
       p {
