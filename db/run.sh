@@ -15,6 +15,7 @@ for sql in *.sql; do
   if echo $already_run | grep -q $sql; then
     continue;
   fi
-  echo @PASSWORD | $PSQL -f $sql
-  echo @PASSWORD | $PSQL -c "INSERT INTO db_setup (name, created) VALUES ('${sql##*/}', 'now')"
+  echo @PASSWORD | $PSQL --single-transaction \
+                         -f $sql \
+                         -c "INSERT INTO db_setup (name, created) VALUES ('${sql##*/}', 'now')"
 done
