@@ -179,7 +179,7 @@ in rec {
     mkdir -p ${web-path}/templates
 
     ${ if debug-mode
-       then ''now=2018-01-12T18:53:43-08:00''
+       then ''now=2018-05-20T05:49:41-07:00''
        else ''now=`date -Iseconds`'' }
     cd ${monitor-script}/bin
     ${ if debug-mode

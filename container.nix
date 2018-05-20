@@ -32,4 +32,6 @@ in
   services.nginx.virtualHosts = {
     "localhost" = angell-packages.nginx-locations;
   };
+
+  system.nixos.stateVersion = "18.09";
 }
