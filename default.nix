@@ -210,7 +210,7 @@ in rec {
 
   lua-path = "${pgmoon}/lib/?.lua;${pgmoon}/lib/?/init.lua;${lua-resty-path}";
   nginx-locations = {
-    locations."/_static".alias = web-path;
+    locations."/_static/".alias = web-path;
     locations."/" = {
       extraConfig = ''
         default_type text/plain;

@@ -4,7 +4,7 @@ let angell-packages = import ./default.nix { inherit pkgs angell-password web-pa
     angell-password = "secure-angell";
     angell-class-monitor = angell-packages.monitor-script;
     mail-host = "10.233.1.1";
-    web-path = "/var/run/angell-classes";
+    web-path = "/var/run/angell-classes/";
     template-path = "${web-path}/templates";
     angell-wrapper = angell-packages.wrapper;
 in
@@ -28,10 +28,10 @@ in
   services.nginx.package = (pkgs.nginx.overrideAttrs (oldAttrs: { configureFlags = oldAttrs.configureFlags ++ [/*"--with-ld-opt=${pgmoon}/doesnotexit"*/]; } )).override { modules = with pkgs.nginxModules; [ lua ]; };
   services.nginx.appendHttpConfig = ''
     lua_package_path ";;${angell-packages.lua-path}";
+    lua_load_resty_core off;
   '';
   services.nginx.virtualHosts = {
     "localhost" = angell-packages.nginx-locations;
   };
 
-  system.nixos.stateVersion = "18.09";
 }
