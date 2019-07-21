@@ -132,7 +132,7 @@ for u in urls:
     lines = str(fetch(u))
     with open(RAWDIR + "/" + re.sub("/", "_", u), "w", encoding="latin-1") as f:
       f.write(lines)
-  title_line = re.search('product_image.*alt="([^"]*)"', lines)
+  title_line = re.search('product_image.*?alt="([^"]*)"', lines)
   if title_line == None:
     continue
   name = title_line.group(1)
@@ -150,7 +150,8 @@ for u in urls:
     endTimeSp = extractMatch(re.search(timeRegex + "$", session.timeString), "NoEndTime")
     session.endTime = re.sub("^([0-9]*)([AP]M)", r"\1:00\2", re.sub("\s", "", endTimeSp))
     session.noClass = extractMatch(re.search("[Nn]o\s*[Cc]lass\s*[^)]*", desc), "")
-    remainder = re.split("|".join([session.day, session.timeString, session.period, session.noClass]), desc)
+    used = [session.day, session.timeString, session.period, session.noClass]
+    remainder = re.split("|".join([s for s in used if s]), desc)
     if len(remainder[0]) > 2:
       session.prefix = re.sub(":$", "", remainder[0].rstrip())
     remainder = re.sub("|".join([session.day, session.timeString, session.period, session.prefix, session.noClass]), "", desc)
