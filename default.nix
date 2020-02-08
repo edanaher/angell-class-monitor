@@ -144,7 +144,7 @@ in rec {
 
     propagatedBuildInputs = with pkgs.python3Packages; [ docopt psycopg2 ];
 
-    buildPhase = "";
+    format = "other";
 
     installPhase = ''
       mkdir -p $out/bin/
